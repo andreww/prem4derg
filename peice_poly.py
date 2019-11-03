@@ -25,7 +25,12 @@ class PeicewisePolynomial(object):
     """
     
     def __init__(self, c, x):
+        assert len(x.shape)==1, "breakpoints must be 1D"
         self.breakpoints = x 
+        if len(c.shape)==1:
+            c = np.expand_dims(c, axis=1)
+            c = np.append(c,np.zeros_like(c), axis=1)
+        assert len(c.shape)==2, "breakpoints must be 2D"
         self.coeffs = c
         
         
