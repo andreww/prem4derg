@@ -84,6 +84,10 @@ class Prem(object):
         
         self.density_poly = pp.PeicewisePolynomial(density_params, 
                                            breakpoints)
+        self.vp_poly = pp.PeicewisePolynomial(vp_params, breakpoints)
+        self.vs_poly = pp.PeicewisePolynomial(vs_params, breakpoints)
+        self.qk_poly = pp.PeicewisePolynomial(q_kappa_params, breakpoints)
+        self.qm_poly = pp.PeicewisePolynomial(q_mu_params, breakpoints)
         
         # setup polynomials for mass. This is 4*pi*\int rho(r)*r^2 dr
         r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]),
@@ -108,7 +112,36 @@ class Prem(object):
         Evaluate density in kg/m**3 at radii r (in km)
         """
         return self.density_poly(r)
+
+    def vs(self, r, t=1):
+        """
+        Evaluate s-wave velocity (in km/s) at radius r (in km).
+
+        Optionally corrected for period (t), default is 1 s.
+        """
+        vs = self.vs_poly(r)
+        if t != 1:
+            qm = self.qm_poly(r)
+            vs = vs * (1.0 - ((np.log(t)/np.pi)*np.reciprocal(qm)))
+        
+        return vs
     
+    def vp(self, r, t=1):
+        """
+        Evaluate p-wave velocity (in km/s) at radius r (in km).
+
+        Optionally corrected for period (t), default is 1 s.
+        """
+        vp = self.vp_poly(r)
+        if t != 1:
+            qm = self.qm_poly(r)
+            qk = self.qk_poly(r)
+            vs = self.vs_poly(r)
+            e = (4/3)*((vs/vp)**2)
+            vp = vp * (1.0 - ((np.log(t)/np.pi)*(((1.0-e)*np.reciprocal(qk)) -
+                                                 e*np.reciprocal(qm))))
+        return vp
+
     def mass(self, r, r_inner=0.0):
         """
         Evaluate mass inside radius r (in km)
