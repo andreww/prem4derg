@@ -11,9 +11,33 @@ import scipy.integrate as spint
 
 import peice_poly as pp
 
+
+# Default parameters for isotropic PREM
+_r_earth = 6371.0
+_bps = np.array([0.0, 1221.5, 3480.0, 3630.0, 5600.0, 5701.0, 5771.0,
+                 5971.0, 6151.0, 6291.0, 6346.6, 6356.0, 6368.0, 6371.0])
+_density_params = np.array([[13.0885,  0.0000, -8.8381,  0.0000],
+                            [12.5815, -1.2638, -3.6426, -5.5281],
+                            [7.9565, -6.4761,  5.5283, -3.0807],
+                            [7.9565, -6.4761,  5.5283, -3.0807],
+                            [7.9565, -6.4761,  5.5283, -3.0807],
+                            [5.3197, -1.4836,  0.0000,  0.0000],
+                            [11.2494, -8.0298,  0.0000,  0.0000],
+                            [7.1089, -3.8045,  0.00002,  0.0000],
+                            [2.6910,  0.6924,  0.0000,  0.0000],
+                            [2.6910,  0.6924,  0.0000,  0.0000],
+                            [2.9000,  0.0000,  0.0000,  0.0000],
+                            [2.6000,  0.0000,  0.0000,  0.0000],
+                            [1.0200,  0.0000,  0.0000,  0.0000]])
+_density_params[:,0] = _density_params[:,0] * 1000.0
+_density_params[:,1] = (_density_params[:,1] * 1000.0) / _r_earth 
+_density_params[:,2] = (_density_params[:,2] * 1000.0) / (_r_earth**2)
+_density_params[:,3] = (_density_params[:,3] * 1000.0) / (_r_earth**3)
+
 class Prem(object):
     
-    def __init__(self, breakpoints, density_params, r_earth=6371.0):
+    def __init__(self, breakpoints=_bps, density_params=_density_params,
+                 r_earth=_r_earth):
         
         self.r_earth = r_earth
         
