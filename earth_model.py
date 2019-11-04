@@ -142,6 +142,23 @@ class Prem(object):
                                                  e*np.reciprocal(qm))))
         return vp
 
+    def bulk_modulus(self, r):
+        """
+        Evaluate bulk modulus (in GPa) at radius r (in km)
+        """
+        vp = self.vp_poly(r) * 1000.0 # m/s
+        mu = self.shear_modulus(r)
+        density = self.density_poly(r)
+        return ((vp**2 * density) / 1e9) - mu
+
+    def shear_modulus(self, r):
+        """
+        Evaluate shear modulus (in GPa) at radius r (in km)
+        """
+        vs = self.vs_poly(r) * 1000.0 # m/s
+        density = self.density_poly(r)
+        return (vs**2 * density) / 1e9     
+
     def mass(self, r, r_inner=0.0):
         """
         Evaluate mass inside radius r (in km)
