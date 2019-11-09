@@ -113,30 +113,30 @@ class Prem(object):
         """
         return self.density_poly(r, break_down=break_down)
 
-    def vs(self, r, t=1):
+    def vs(self, r, t=1, break_down=False):
         """
         Evaluate s-wave velocity (in km/s) at radius r (in km).
 
         Optionally corrected for period (t), default is 1 s.
         """
-        vs = self.vs_poly(r)
+        vs = self.vs_poly(r, break_down=break_down)
         if t != 1:
-            qm = self.qm_poly(r)
+            qm = self.qm_poly(r, break_down=break_down)
             vs = vs * (1.0 - ((np.log(t)/np.pi)*np.reciprocal(qm)))
         
         return vs
     
-    def vp(self, r, t=1):
+    def vp(self, r, t=1, break_down=False):
         """
         Evaluate p-wave velocity (in km/s) at radius r (in km).
 
         Optionally corrected for period (t), default is 1 s.
         """
-        vp = self.vp_poly(r)
+        vp = self.vp_poly(r, break_down=break_down)
         if t != 1:
-            qm = self.qm_poly(r)
-            qk = self.qk_poly(r)
-            vs = self.vs_poly(r)
+            qm = self.qm_poly(r, break_down=break_down)
+            qk = self.qk_poly(r, break_down=break_down)
+            vs = self.vs_poly(r, break_down=break_down)
             e = (4/3)*((vs/vp)**2)
             vp = vp * (1.0 - ((np.log(t)/np.pi)*(((1.0-e)*np.reciprocal(qk)) -
                                                  e*np.reciprocal(qm))))
@@ -264,6 +264,8 @@ class Prem(object):
         radii = np.array([])
         depths = np.array([])
         densities = np.array([])
+        vps = np.array([])
+        vss = np.array([])
 
         nbps = len(self.density_poly.breakpoints) -1
         for i in range(nbps):
@@ -273,9 +275,13 @@ class Prem(object):
                            self.density_poly.breakpoints[k], -min_step)
             ds = self.r_earth - rs
             dens = self.density(rs, break_down=True) # As we go inwards
+            vp = self.vp(rs, break_down=True) # As we go inwards
+            vs = self.vs(rs, break_down=True) # As we go inwards
             radii = np.append(radii, rs)
             depths = np.append(depths, ds)
             densities = np.append(densities, dens)
+            vps = np.append(vps, vp)
+            vss = np.append(vss, vs)
         
             # Look at the breakpoint. If it is discontinous in 
             # vJalue put add it here (i.e. so we have above followed 
@@ -287,9 +293,13 @@ class Prem(object):
                 rs = self.density_poly.breakpoints[k]
                 ds = self.r_earth - rs
                 dens = self.density(rs)
+                vp = self.vp(rs)
+                vs = self.vs(rs)
                 radii = np.append(radii, rs)
                 depths = np.append(depths, ds)
                 densities = np.append(densities, dens) 
+                vps = np.append(vps, vp)
+                vss = np.append(vss, vs)
             elif (self.density(self.density_poly.breakpoints[k]) != 
                   self.density(self.density_poly.breakpoints[k], 
                                break_down=True)):
@@ -297,10 +307,15 @@ class Prem(object):
                 rs = self.density_poly.breakpoints[k]
                 ds = self.r_earth - rs
                 dens = self.density(rs)
+                vp = self.vp(rs)
+                vs = self.vs(rs)
                 radii = np.append(radii, rs)
                 depths = np.append(depths, ds)
                 densities = np.append(densities, dens)
+                vps = np.append(vps, vp)
+                vss = np.append(vss, vs)
             
-        result = np.core.records.fromarrays([depths, radii, densities], 
-                                            names='depth, radius, density')
+        result = np.core.records.fromarrays([depths, radii, densities,
+                                             vps, vss], 
+                      names='depth, radius, density, vp, vs')
         return result
