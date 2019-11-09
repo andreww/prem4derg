@@ -107,11 +107,11 @@ class Prem(object):
         # integrating this gives MOI:
         self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2/3) * np.pi  
         
-    def density(self, r):
+    def density(self, r, break_down=False):
         """
         Evaluate density in kg/m**3 at radii r (in km)
         """
-        return self.density_poly(r)
+        return self.density_poly(r, break_down=break_down)
 
     def vs(self, r, t=1):
         """
@@ -239,3 +239,68 @@ class Prem(object):
                                       r[::-1]*1000.0, initial=0)
             pressure = pressure[::-1]/1E9
         return pressure
+
+    def tabulate_model_inwards(self, min_step):
+        """
+        Return a record array representing the model handling discontiuities
+
+        This method creates a numpy record array with the model evaulated
+        at all depths with a minimum spacing of min_step km. All breakpoints
+        are also included in the output. If the densioty is discontinuoius,
+        the depth is represented twice, first with the value above the 
+        discontiuity, then with the value below it. This representation can
+        be used to construct travel time curves (for examople).
+
+        The record array contains fields:
+
+            depth (in km)
+            radius (in km)
+            density (in kg/m^3)
+
+        and is ordered such that element 0 is at the surface and the last
+        element (element -1) is at the center of the planet.
+        """
+        # Keep the data as we get it
+        radii = np.array([])
+        depths = np.array([])
+        densities = np.array([])
+
+        nbps = len(self.density_poly.breakpoints) -1
+        for i in range(nbps):
+            j = nbps - i
+            k = j - 1
+            rs = np.arange(self.density_poly.breakpoints[j], 
+                           self.density_poly.breakpoints[k], -min_step)
+            ds = self.r_earth - rs
+            dens = self.density(rs, break_down=True) # As we go inwards
+            radii = np.append(radii, rs)
+            depths = np.append(depths, ds)
+            densities = np.append(densities, dens)
+        
+            # Look at the breakpoint. If it is discontinous in 
+            # vJalue put add it here (i.e. so we have above followed 
+            # by below for the next step). Othersie we can skip it 
+            # (and it gets adder in the next iteration). But we need
+            # to hadle k = 0 carefully (always stick in the origin)
+            if k == 0:
+                # Add the value at r=0
+                rs = self.density_poly.breakpoints[k]
+                ds = self.r_earth - rs
+                dens = self.density(rs)
+                radii = np.append(radii, rs)
+                depths = np.append(depths, ds)
+                densities = np.append(densities, dens) 
+            elif (self.density(self.density_poly.breakpoints[k]) != 
+                  self.density(self.density_poly.breakpoints[k], 
+                               break_down=True)):
+                # Add the value above the inner boundary of this layer
+                rs = self.density_poly.breakpoints[k]
+                ds = self.r_earth - rs
+                dens = self.density(rs)
+                radii = np.append(radii, rs)
+                depths = np.append(depths, ds)
+                densities = np.append(densities, dens)
+            
+        result = np.core.records.fromarrays([depths, radii, densities], 
+                                            names='depth, radius, density')
+        return result
