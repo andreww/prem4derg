@@ -21,6 +21,24 @@ repository in github and clone from their fork.
 Two final steps will need to be done each time you want to use the code. These are to change directory into the `prem4derg` directory,
 and activate the `p4d` environemnt by running `source activate p4d`.
 
+### Mineos
+
+In order to compute normal mode frequencies, we use [mineos](https://geodynamics.org/cig/software/mineos/). I 
+installed this as follows (working outside the prem4derg directory):
+
+    wget https://geodynamics.org/cig/software/mineos/mineos-1.0.2.tgz
+    mkdir cig
+    tar -xzvf mineos-1.0.2.tgz
+    cd mineos-1.0.2
+    ./configure --prefix=/Users/andreww/Code/cig
+
+Edit the Makefile to add: `-Wno-error -Wno-return-type` to the `CFLAGS` because the C contains errors.
+
+    make 
+    make install
+
+
+
 ## Examples of use
 
 Example Jupyter notebooks can be accessed and explored by running `jupyter notebook`. 
