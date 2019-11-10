@@ -44,10 +44,7 @@ Edit the Makefile to add: `-Wno-error -Wno-return-type` to the `CFLAGS` because 
 Example Jupyter notebooks can be accessed and explored by running `jupyter notebook`. 
 
 ## Tasks that need doing
-* Make graphs etc. in the density notebook nice.
 * Fill in the 'blurb' around the graphs.
-* Dump out a obspy taup model from the velocities and use this to plot travel time curves
-* Decorate with a subset of the travel time data used to build PREM.
 * Create a normal modes notebook. Dump out models to mineos (https://geodynamics.org/cig/software/mineos/) and calculate some mode data used to fit PREM. Show comparison.
   
 
