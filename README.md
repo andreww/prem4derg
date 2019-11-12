@@ -37,15 +37,25 @@ Edit the Makefile to add: `-Wno-error -Wno-return-type` to the `CFLAGS` because 
     make 
     make install
 
-
-
 ## Examples of use
 
-Example Jupyter notebooks can be accessed and explored by running `jupyter notebook`. 
+Example Jupyter notebooks can be accessed and explored by running `jupyter notebook`. Four examples are
+currently provided:
 
-## Tasks that need doing
-* Fill in the 'blurb' around the graphs.
-* Create a normal modes notebook. Dump out models to mineos (https://geodynamics.org/cig/software/mineos/) and calculate some mode data used to fit PREM. Show comparison.
+* A [density example](./PREM_density_example.ipynb), showing how a model can be defined and used to calculate mass, moment of inertia, gravity and pressure.
+* A [velocity example](./PREM_velocity_example.ipynb), showing how a model can be defined and used to calculate seismic velocities as a function of depth and period.
+* A [travel time example](./PREM_travel_times_example.ipynb), showing how an obspy taupy model can be created and used to compute travel time curves.
+* A [normal modes example](./PREM_normal_modes_example.ipynb), showing how Mineos can be used to compute normal mode frequencies.
+
+These examples are only starting point. For example, the code could be used to fit new models. 
+
+## Development and support
+
+Prem4derg is new software, bugs and rough edges may abound. Users who are interested in 
+changing the code are encouraged to [create a fork on GitHub and submit 
+changes via pull requests](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests).
+Problems can be reported via [issues](https://github.com/andreww/prem4derg/issues), which also list areas
+where further development may be useful.
   
 
 ## References
