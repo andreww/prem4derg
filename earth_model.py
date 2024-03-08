@@ -221,6 +221,23 @@ class Prem(object):
                                                       ((r[i]*1000)**2)*G 
         return g
     
+    def grav_potential(self, r):
+        """
+        Evaluate the gravitational potential at radius r in J/kg
+        """
+        G = 6.6743E-11
+        if np.ndim(r) == 0:
+            phi = -1 * self.mass_poly.integrate(0.0,r)/(r*1000)*G
+        else:
+            phi = np.zeros_like(r)
+            for i in range(r.size):
+                if r[i] == 0:
+                    phi[i] = 0
+                else:
+                    phi[i] = -1 * self.mass_poly.integrate(0.0, r[i]) / \
+                                                          (r[i]*1000)*G 
+        return phi
+    
     def pressure(self, r):
         """
         Evaluate pressure (in GPa) at radius r (in km)
