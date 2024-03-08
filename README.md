@@ -33,6 +33,7 @@ installed this as follows (working outside the prem4derg directory):
     ./configure --prefix=/Users/andreww/Code/cig
 
 Edit the Makefile to add: `-Wno-error -Wno-return-type` to the `CFLAGS` because the C contains errors.
+Add `-fallow-argument-mismatch` to FFLAGS because the Fortran contains errors.
 
     make 
     make install
