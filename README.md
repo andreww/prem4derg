@@ -26,7 +26,7 @@ and activate the `p4d` environemnt by running `source activate p4d`.
 In order to compute normal mode frequencies, we use [mineos](https://geodynamics.org/cig/software/mineos/). I 
 installed this as follows (working outside the prem4derg directory):
 
-    wget https://geodynamics.org/cig/software/mineos/mineos-1.0.2.tgz
+    wget http://geoweb.cse.ucdavis.edu/cig/software/mineos/mineos-1.0.2.tgz
     mkdir cig
     tar -xzvf mineos-1.0.2.tgz
     cd mineos-1.0.2
