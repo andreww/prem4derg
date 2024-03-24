@@ -8,7 +8,7 @@ Support for PREM-like 1D Earth models
 import numpy as np
 import scipy.integrate as spint
 
-import peice_poly as pp
+from . import peice_poly as pp
 
 
 # Default parameters for isotropic PREM
