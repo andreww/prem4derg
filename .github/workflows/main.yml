@@ -33,6 +33,10 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
 
+    - name: Check style with Pylint
+      run: |
+        python3 -m pylint --fail-under=5 --reports=y earth_model
+
     - name: Test with PyTest
       run: |
         python3 -m pytest --cov=earth_model 
