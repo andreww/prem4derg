@@ -1,0 +1,5 @@
+numpy
+pylint
+pytest
+pytest-cov
+scipy
