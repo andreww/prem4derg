@@ -178,7 +178,7 @@ class Prem(object):
                     m[i] = self.mass_poly.integrate(r_inner, r[i])
         return m
 
-    def moment_or_inertia(self, r, r_inner=0.0):
+    def moment_of_inertia(self, r, r_inner=0.0):
         """
         Evaluate moment of inertia inside radius r (in km)
 
