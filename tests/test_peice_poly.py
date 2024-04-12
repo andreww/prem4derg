@@ -13,6 +13,7 @@ import earth_model.peice_poly as pp
 # tests). Also see comments below that indicate edge
 # cases that need thinking about
 
+
 def test_constant():
     """
     Check that a constant function gives allways gives it's value
@@ -64,14 +65,14 @@ def test_deriv():
     npt.assert_allclose(calc_dpoly.coeffs, expected_deriv_coefs)
     assert calc_dpoly(0.5) == 5.0
     assert calc_dpoly(3.0) == 150.0
-    # What should we do on a breakpoint? 
+    # What should we do on a breakpoint?
 
 
 def test_antideriv():
     poly = pp.PeicewisePolynomial(np.array([[4.0, 3.0, 2.0],
                                             [40.0, 30.0, 20.0]]),
                                   np.array([0.0, 2.0, 4.0]))
-    expected_antideriv_coefs = np.array([[0.0, 4.0, 3.0/2.0, 2.0/3.0], 
+    expected_antideriv_coefs = np.array([[0.0, 4.0, 3.0/2.0, 2.0/3.0],
                                          [0.0, 40.0, 30.0/2.0, 20.0/3.0]])
     calc_antideriv = poly.antiderivative()
     npt.assert_allclose(calc_antideriv.coeffs, expected_antideriv_coefs)
