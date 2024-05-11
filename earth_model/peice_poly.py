@@ -129,6 +129,7 @@ class PeicewisePolynomial(object):
         return integral
 
     def mult(self, other):
+        # FIXME - for this approach brakepoints need to be same place too
         assert self.coeffs.shape[0] == other.coeffs.shape[0], \
                                      'different number of breakpoints'
         mult_breakpoints = self.breakpoints

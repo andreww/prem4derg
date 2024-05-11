@@ -76,3 +76,43 @@ def test_antideriv():
                                          [0.0, 40.0, 30.0/2.0, 20.0/3.0]])
     calc_antideriv = poly.antiderivative()
     npt.assert_allclose(calc_antideriv.coeffs, expected_antideriv_coefs)
+
+
+def test_integrate():
+    poly = pp.PeicewisePolynomial(np.array([[4.0, 3.0, 2.0],
+                                            [40.0, 30.0, 20.0]]),
+                                  np.array([0.0, 2.0, 4.0]))
+    antideriv = poly.antiderivative()
+
+    expect_def_int_01 = 2/3 + 3/2 + 4
+    calc_def_int_01 = antideriv.integrate(0, 1)
+    npt.assert_allclose(calc_def_int_01, expect_def_int_01)
+
+    expect_def_int_12 = ((2/3) * 8 + (3/2) * 4 + 4 * 2) - calc_def_int_01
+    calc_def_int_12 = antideriv.integrate(1, 2)
+    npt.assert_allclose(calc_def_int_12, expect_def_int_12)
+
+    expect_def_int_24 = (((20/3) * 4**3 + (30/2) * 4**2 + 40 * 4) -
+                         ((20/3) * 2**3 + (30/2) * 2**2 + 40 * 2))
+    calc_def_int_24 = antideriv.integrate(2, 4)
+    npt.assert_allclose(calc_def_int_24, expect_def_int_24)
+
+    expect_def_int_14 = expect_def_int_12 + expect_def_int_24
+    calc_def_int_14 = antideriv.integrate(1, 4)
+    npt.assert_allclose(calc_def_int_14, expect_def_int_14)
+
+
+def test_mult():
+    poly1 = pp.PeicewisePolynomial(np.array([[4.0, 3.0, 2.0],
+                                             [4.0, 3.0, 2.0]]),
+                                   np.array([0.0, 2.0, 4.0]))
+    poly2 = pp.PeicewisePolynomial(np.array([[1.0, 2.0, 4.0],
+                                             [1.0, 2.0, 4.0]]),
+                                   np.array([0.0, 2.0, 4.0]))
+    # Why do we have the x^5 term (it's zero, but not needed...)
+    expect_poly_mult = pp.PeicewisePolynomial(
+        np.array([[4.0, 11.0, 24.0, 16.0, 8.0, 0.0],
+                  [4.0, 11.0, 24.0, 16.0, 8.0, 0.0]]),
+        np.array([0.0, 2.0, 4.0]))
+    calc_poly_mult = poly1.mult(poly2)
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
