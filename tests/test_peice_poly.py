@@ -139,7 +139,7 @@ def test_integrate():
     expect_def_int_14 = expect_def_int_12 + expect_def_int_24
     calc_def_int_14 = antideriv.integrate(1, 4)
     npt.assert_allclose(calc_def_int_14, expect_def_int_14)
-    # what if we reverse order of bounds? 
+    # what if we reverse order of bounds?
 
 
 def test_mult():
