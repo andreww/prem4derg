@@ -209,7 +209,10 @@ class Prem(object):
         """
         G = 6.6743E-11
         if np.ndim(r) == 0:
-            g = self.mass_poly.integrate(0.0, r)/((r*1000)**2)*G
+            if r == 0:
+                g = 0
+            else:
+                g = self.mass_poly.integrate(0.0, r)/((r*1000)**2)*G
         else:
             g = np.zeros_like(r)
             for i in range(r.size):

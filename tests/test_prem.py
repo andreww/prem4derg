@@ -17,6 +17,8 @@ r = np.array([0.0, 300.0, 1200.0, 1400.0, 3100.0,
               3900.0, 5600.0, 6061.0, 6311.0]) # in km
 p = np.array([3639.0, 3617.0, 3300.0, 3187.0, 1754.0,
               1118.0, 283.0, 102.0, 17.0]) * 0.1 # in GPa
+g = np.array([0.0, 110.0, 432.0, 494.0, 981.0,
+              1023.0, 1000.0, 994.0, 985.0]) / 100 # in m/s
 
 def make_test_data(radius, data):
     """
@@ -39,6 +41,17 @@ def test_earth_mass():
     calculated_mass = prem.mass(prem.r_earth)
     expected_mass = 5.972e+24
     npt.assert_allclose(calculated_mass, expected_mass, atol=1.0E22)
+
+
+@pytest.mark.parametrize("radius,expected_gravity", make_test_data(r,g) )
+def test_prem_gravity(radius, expected_gravity):
+    """
+    A selection of cases from Table A.1 in Poirier's book
+    'introduction to the physics of Earth's interior'
+    """
+    prem = Prem()
+    g_calc = prem.gravity(radius)
+    npt.assert_allclose(g_calc, expected_gravity, atol=0.05)
 
 
 @pytest.mark.parametrize("radius,expected_pressure", make_test_data(r,p) )
