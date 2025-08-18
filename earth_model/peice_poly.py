@@ -45,7 +45,7 @@ class PeicewisePolynomial(object):
 
     def _evaluate_at_point(self, x, break_down=False):
         """
-        Evaluate peicewise polynomal at point x
+        Evaluate piecewise polynomial at point x
         """
         coef = self._get_coefs(x, break_down)
         value = self._evaluate_polynomial(x, coef)
