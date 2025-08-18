@@ -127,6 +127,29 @@ class PeicewisePolynomial(object):
                     lower_bound = bp
 
         return integral
+    
+    def integrating_poly(self):
+        """
+        Returns a piecewise polynomial that represents the definite
+        integral self between 0 and the evaluation point.
+        """
+        antiderivative = self.antiderivative()
+        ip_coeffs = np.zeros_like(antiderivative.coeffs)
+        # Inside each segment, the integral between 0 and x
+        # is the integral between the lower bound of that 
+        # segment and the upper bound, plus the integral 
+        # for all other segments. These are all constants
+        # so can be added to the constent term in this 
+        # segment's antiderivative (we dont need the last breakpoint)
+        for bpi, bp in enumerate(antiderivative.breakpoints[0:-1]):
+            ip_coeffs[bpi, :] = antiderivative.coeffs[bpi, :]
+            # Subtract antiderivate on inner boundary
+            ip_coeffs[bpi, 0] = ip_coeffs[bpi, 0] - antiderivative(bp)
+            # add all the other segments
+            if bpi > 0:
+                ip_coeffs[bpi, 0] = ip_coeffs[bpi, 0] + antiderivative.integrate(0, bp)
+ 
+        return PeicewisePolynomial(ip_coeffs, antiderivative.breakpoints)
 
     def mult(self, other):
         # FIXME - for this approach brakepoints need to be same place too
@@ -143,3 +166,20 @@ class PeicewisePolynomial(object):
 
         mult_poly = PeicewisePolynomial(mult_coefs, mult_breakpoints)
         return mult_poly
+    
+    def div_xsq(self):
+        """
+        The polynomial is multiplied by x^-2
+        """
+        # Ideally we should implement polynomial division, but
+        # this is all I need for now
+        assert np.allclose(self.coeffs[:, 0], 0.0)
+        assert np.allclose(self.coeffs[:, 1], 0.0) 
+        div_breakpoints = self.breakpoints
+        # degree of self - degree of other must be positive
+        div_coeffs = np.zeros((self.coeffs.shape[0], self.coeffs.shape[1]-2))
+        for seg in range(self.coeffs.shape[0]):
+            for i in range(self.coeffs.shape[1]):
+                div_coeffs[seg, i-2] = self.coeffs[seg, i] 
+        div_poly = PeicewisePolynomial(div_coeffs, div_breakpoints)
+        return div_poly
