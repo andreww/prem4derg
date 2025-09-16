@@ -23,16 +23,27 @@ class PeicewisePolynomial(object):
        S = sum(c[m, i] * (xp - x[i])**(k-m) for m in range(k+1))
 
     Note some important differences between this and PPoly!
+
+    The module also supports negative powers set by passing the c_neg
+    parameter.
     """
 
-    def __init__(self, c, x):
+    def __init__(self, c, x, c_neg=None):
         assert len(x.shape) == 1, "breakpoints must be 1D"
         self.breakpoints = x
         if len(c.shape) == 1:
             c = np.expand_dims(c, axis=1)
             c = np.append(c, np.zeros_like(c), axis=1)
-        assert len(c.shape) == 2, "breakpoints must be 2D"
+        assert len(c.shape) == 2, "Positive coefficients must be 2D"
         self.coeffs = c
+        if c_neg is not None:
+            if len(c_neg.shape) == 1:
+                c_neg = np.expand_dims(c_neg, axis=1)
+                c_neg = np.append(c_neg, np.zeros_like(c), axis=1)
+            assert len(c_neg.shape) == 2, "Negative coefficients must be 2D"
+            self.negative_coeffs = c_neg
+        else:
+            self.negative_coeffs = None
 
     def __call__(self, xp, break_down=False):
         if np.ndim(xp) == 0:
@@ -47,39 +58,53 @@ class PeicewisePolynomial(object):
         """
         Evaluate piecewise polynomial at point x
         """
-        coef = self._get_coefs(x, break_down)
-        value = self._evaluate_polynomial(x, coef)
-        return value
-
-    def _evaluate_polynomial(self, x, coef):
+        coef, neg_coef = self._get_coefs(x, break_down)
         value = 0
         for i, c in enumerate(coef):
             value = value + c * x**i
+        if neg_coef is not None:
+            for i, c in enumerate(neg_coef):
+                if c != 0.0: # Hum - avoid these...
+                    value = value + (c / x**i) 
         return value
 
     def _get_coefs(self, x, break_down=False):
         """
         Return coefs at x
 
-        If x falls on a breakpoint, we take the coeffecents from
+        If x falls on a breakpoint, we take the coefficients from
         'above' the breakpoint. Unless break_down is True, in which
-        case we take the coeffecents from 'below'
+        case we take the coefficients from 'below'
         """
         if x == self.breakpoints[-1]:
-            # We use the last coefficents for the outside point
-            return self.coeffs[-1, :]
+            # We use the last coefficients for the outside point
+            pos_coef = self.coeffs[-1, :]
+            if self.negative_coeffs is None:
+                neg_coef = None
+            else:
+                neg_coef = self.negative_coeffs[-1, :]
+            return pos_coef, neg_coef
         if break_down:
             for i in range(self.breakpoints.size):
                 if ((x > self.breakpoints[i])
                    and (x <= self.breakpoints[i+1])):
-                    return self.coeffs[i, :]
+                    pos_coef = self.coeffs[i, :]
+                    if self.negative_coeffs is None:
+                        neg_coef = None
+                    else:
+                        neg_coef = self.negative_coeffs[i, :]
+                    return pos_coef, neg_coef
         else:
             for i in range(self.breakpoints.size):
                 if ((x >= self.breakpoints[i])
                    and (x < self.breakpoints[i+1])):
-                    return self.coeffs[i, :]
-
-        return None
+                    pos_coef = self.coeffs[i, :]
+                    if self.negative_coeffs is None:
+                        neg_coef = None
+                    else:
+                        neg_coef = self.negative_coeffs[i, :]
+                    return pos_coef, neg_coef
+        return None, None
 
     def derivative(self):
         deriv_breakpoints = self.breakpoints

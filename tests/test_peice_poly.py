@@ -32,6 +32,53 @@ def test_constant():
     # FIXME - document and test behaviour at bounds
 
 
+def test_quadratic():
+    """
+    Check that a quadratic function gives the correct value
+    """
+    poly = pp.PeicewisePolynomial(np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]),
+                                  np.array([0.0, 0.5, 1.0]))
+    assert poly(0.0) == 0.0
+    assert poly(0.25) == 0.25**2
+    assert poly(0.5) == 0.5**2
+    assert poly(0.5, break_down=False) == 0.5**2
+    assert poly(0.5, break_down=True) == 0.5**2
+    assert poly(0.75) == 0.75**2
+    assert poly(1.0) == 1.0
+    npt.assert_allclose(poly(np.array([0.0, 0.25, 0.5, 0.75, 1.0])),
+                        np.array([0.0, 0.25**2, 0.5**2, 0.75**2, 1.0]))
+    npt.assert_allclose(poly(np.array([0.0, 0.25, 0.5, 0.75, 1.0]),
+                             break_down=False),
+                        np.array([0.0, 0.25**2, 0.5**2, 0.75**2, 1.0]))
+    npt.assert_allclose(poly(np.array([0.25, 0.5, 0.75, 1.0]),
+                             break_down=True),
+                        np.array([0.25**2, 0.5**2, 0.75**2, 1.0]))
+
+
+def test_one_over_x():
+    """
+    Check that a 1/x function gives the correct value using a 
+    quadratic for x less than 0.5
+    """
+    poly = pp.PeicewisePolynomial(np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 0.0]]),
+                                  np.array([0.0, 0.5, 1.0]),
+                                  c_neg=np.array([[0.0, 0.0], [0.0, 1.0]]))
+    assert poly(0.0) == 0.0
+    assert poly(0.25) == 0.25**2
+    assert poly(0.5) == 1.0/0.5
+    assert poly(0.5, break_down=False) == 1.0/0.5
+    assert poly(0.5, break_down=True) == 0.5**2
+    assert poly(0.75) == 1.0/0.75
+    assert poly(1.0) == 1.0
+    npt.assert_allclose(poly(np.array([0.0, 0.25, 0.5, 0.75, 1.0])),
+                        np.array([0.0, 0.25**2, 1.0/0.5, 1.0/0.75, 1.0]))
+    npt.assert_allclose(poly(np.array([0.0, 0.25, 0.5, 0.75, 1.0]),
+                             break_down=False),
+                        np.array([0.0, 0.25**2, 1.0/0.5, 1.0/0.75, 1.0]))
+    npt.assert_allclose(poly(np.array([0.25, 0.5, 0.75, 1.0]),
+                             break_down=True),
+                        np.array([0.25**2, 0.5**2, 1.0/0.75, 1.0]))
+
 def test_step():
     """
     Check that two peicewise constants give the right values
