@@ -230,7 +230,8 @@ class Prem(object):
                 return 0.0
             poly = self.density_poly.mult(self.r2_poly)
             poly = poly.integrating_poly()
-            g = poly(r) * 4.0 * np.pi * G / (r*1000.0)**2
+            poly.coeffs = poly.coeffs * 4.0 * np.pi * G
+            g = poly(r) / (r*1000.0)**2
         else:
             g = np.zeros_like(r)
             for i in range(r.size):
@@ -239,7 +240,8 @@ class Prem(object):
                 else:
                     poly = self.density_poly.mult(self.r2_poly)
                     poly = poly.integrating_poly()
-                    g[i] = poly(r[i]) * 4.0 * np.pi * G / (r[i]*1000.0)**2  
+                    poly.coeffs = poly.coeffs * 4.0 * np.pi * G
+                    g[i] = poly(r[i]) / (r[i]*1000.0)**2  
         return g
 
     def grav_potential(self, r):
