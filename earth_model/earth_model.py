@@ -6,7 +6,7 @@ Support for PREM-like 1D Earth models
 """
 
 import numpy as np
-import scipy.integrate as spint
+import scipy.integrate as spint  # type: ignore
 
 from . import peice_poly as pp
 
@@ -178,7 +178,7 @@ class Prem(object):
                     m[i] = self.mass_poly.integrate(r_inner, r[i])
         return m
 
-    def moment_or_inertia(self, r, r_inner=0.0):
+    def moment_of_inertia(self, r, r_inner=0.0):
         """
         Evaluate moment of inertia inside radius r (in km)
 
@@ -209,7 +209,10 @@ class Prem(object):
         """
         G = 6.6743E-11
         if np.ndim(r) == 0:
-            g = self.mass_poly.integrate(0.0, r)/((r*1000)**2)*G
+            if r == 0:
+                g = 0
+            else:
+                g = self.mass_poly.integrate(0.0, r)/((r*1000)**2)*G
         else:
             g = np.zeros_like(r)
             for i in range(r.size):
@@ -250,13 +253,13 @@ class Prem(object):
             rs = np.arange(r, self.r_earth, 1.0)
             g = self.gravity(rs)
             rho = self.density(rs)
-            ps = spint.cumtrapz((-g*rho)[::-1], rs[::-1]*1000.0, initial=0)
+            ps = spint.cumulative_trapezoid((-g*rho)[::-1], rs[::-1]*1000.0, initial=0)
             pressure = ps[-1]/1E9
         else:
             # Assume I have been fed something I can integrate
             g = self.gravity(r)
             rho = self.density(r)
-            pressure = spint.cumtrapz((-g*rho)[::-1],
+            pressure = spint.cumulative_trapezoid((-g*rho)[::-1],
                                       r[::-1]*1000.0, initial=0)
             pressure = pressure[::-1]/1E9
         return pressure

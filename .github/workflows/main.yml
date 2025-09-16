@@ -37,6 +37,10 @@ jobs:
       run: |
         python3 -m pylint --fail-under=5 --reports=y earth_model
 
+    - name: type checks with mypy
+      run: |
+        python -m mypy earth_model
+        
     - name: Test with PyTest
       run: |
         python3 -m pytest --cov=earth_model 

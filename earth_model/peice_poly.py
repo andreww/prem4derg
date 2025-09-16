@@ -45,7 +45,7 @@ class PeicewisePolynomial(object):
 
     def _evaluate_at_point(self, x, break_down=False):
         """
-        Evaluate peicewise polynomal at point x
+        Evaluate piecewise polynomial at point x
         """
         coef = self._get_coefs(x, break_down)
         value = self._evaluate_polynomial(x, coef)
@@ -129,6 +129,7 @@ class PeicewisePolynomial(object):
         return integral
 
     def mult(self, other):
+        # FIXME - for this approach brakepoints need to be same place too
         assert self.coeffs.shape[0] == other.coeffs.shape[0], \
                                      'different number of breakpoints'
         mult_breakpoints = self.breakpoints
