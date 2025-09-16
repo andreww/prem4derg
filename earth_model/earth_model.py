@@ -253,13 +253,13 @@ class Prem(object):
             rs = np.arange(r, self.r_earth, 1.0)
             g = self.gravity(rs)
             rho = self.density(rs)
-            ps = spint.cumtrapz((-g*rho)[::-1], rs[::-1]*1000.0, initial=0)
+            ps = spint.cumulative_trapezoid((-g*rho)[::-1], rs[::-1]*1000.0, initial=0)
             pressure = ps[-1]/1E9
         else:
             # Assume I have been fed something I can integrate
             g = self.gravity(r)
             rho = self.density(r)
-            pressure = spint.cumtrapz((-g*rho)[::-1],
+            pressure = spint.cumulative_trapezoid((-g*rho)[::-1],
                                       r[::-1]*1000.0, initial=0)
             pressure = pressure[::-1]/1E9
         return pressure
