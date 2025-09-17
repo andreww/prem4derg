@@ -182,6 +182,28 @@ def test_antideriv():
     # should this really be exposed in the api?
 
 
+def test_recip_antideriv():
+    """
+    Tests for polynomial antiderivatives with 1/x type terms.
+
+    Note: dy/dx = 4 - 2/x^2 - 6/x^3
+          y = 4x + 2/x + 3/x^2 + C
+    And we can multiply everything by 10 and split the
+    polynomial.
+    """
+    poly = pp.PeicewisePolynomial(np.array([[4.0],
+                                            [40.0]]),
+                                  np.array([0.0, 2.0, 4.0]),
+                                  c_neg=np.array([[0.0, 0.0, -2.0, -6.0],
+                                                  [0.0, 0.0, -20.0, -60.0]]))
+    expected_int_coefs = np.array([[0.0, 4.0], [0.0, 40.0]])
+    expected_neg_int_coeffs = np.array([[0.0, 2.0, 3.0],
+                                        [0.0, 20.0, 30.0]])
+    
+    calc_dpoly = poly.antiderivative()
+    npt.assert_allclose(calc_dpoly.coeffs, expected_int_coefs)
+    npt.assert_allclose(calc_dpoly.negative_coeffs, expected_neg_int_coeffs)
+
 def test_integrate():
     """
     Tests for polynomial integration.

@@ -137,8 +137,21 @@ class PeicewisePolynomial(object):
             for i in range(self.coeffs.shape[1]):
                 antideriv_coeffs[seg, i+1] = self.coeffs[seg, i]/(i+1)
 
-        antideriv = PeicewisePolynomial(antideriv_coeffs,
-                                        antideriv_breakpoints)
+        antideriv_neg_coeffs = None
+        if self.negative_coeffs is not None:
+            antideriv_neg_coeffs = np.zeros((self.negative_coeffs.shape[0],
+                                             self.negative_coeffs.shape[1]-1))
+            for seg in range(self.negative_coeffs.shape[0]):
+                for i in range(self.negative_coeffs.shape[1]):
+                    if i == 0:
+                        continue # There is no 1/x^0
+                    if i == 1:
+                        # 1/x term! This needs to be a log... 
+                        assert self.negative_coeffs[seg, i] == 0.0, "Cannot deal with 1/x terms"
+                        continue
+                    antideriv_neg_coeffs[seg, i-1] = -1 * self.negative_coeffs[seg, i]/(i-1)
+            
+        antideriv = PeicewisePolynomial(antideriv_coeffs, antideriv_breakpoints, antideriv_neg_coeffs)
         return antideriv
 
     def integrate(self, a, b):
