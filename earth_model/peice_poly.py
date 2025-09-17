@@ -116,7 +116,17 @@ class PeicewisePolynomial(object):
                     continue  # Throw away term for x**0
                 deriv_coeffs[seg, i-1] = self.coeffs[seg, i]*i
 
-        deriv = PeicewisePolynomial(deriv_coeffs, deriv_breakpoints)
+        deriv_neg_coeffs = None
+        if self.negative_coeffs is not None:
+            deriv_neg_coeffs = np.zeros((self.negative_coeffs.shape[0],
+                                         self.negative_coeffs.shape[1]+1))
+            for seg in range(self.negative_coeffs.shape[0]):
+                for i in range(self.negative_coeffs.shape[1]):
+                    if i == 0:
+                        continue # There is no 1/x^0
+                    deriv_neg_coeffs[seg, i+1] = -1 * self.negative_coeffs[seg, i]*i
+            
+        deriv = PeicewisePolynomial(deriv_coeffs, deriv_breakpoints, deriv_neg_coeffs)
         return deriv
 
     def antiderivative(self):
