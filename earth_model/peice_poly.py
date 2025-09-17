@@ -25,7 +25,8 @@ class PeicewisePolynomial(object):
     Note some important differences between this and PPoly!
 
     The module also supports negative powers set by passing the c_neg
-    parameter.
+    parameter. The c_neg[:, 0] coefficients are for ln terms used for 
+    integrals.
     """
 
     def __init__(self, c, x, c_neg=None):
@@ -64,8 +65,16 @@ class PeicewisePolynomial(object):
             value = value + c * x**i
         if neg_coef is not None:
             for i, c in enumerate(neg_coef):
-                if c != 0.0: # Hum - avoid these...
-                    value = value + (c / x**i) 
+                if i == 0 and c != 0.0: # Hum - avoid these...
+                    if x == 0.0:
+                        raise ValueError # Cannot do ln(0)
+                    else:
+                        value = value + c * np.log(np.abs(x))
+                elif x == 0.0 and c != 0.0:
+                    raise ZeroDivisionError
+                elif c != 0.0:                
+                    value = value + (c / x**i)
+                # The c == 0.0 case can be ignored - adding 0.0 
         return value
 
     def _get_coefs(self, x, break_down=False):
@@ -123,8 +132,10 @@ class PeicewisePolynomial(object):
             for seg in range(self.negative_coeffs.shape[0]):
                 for i in range(self.negative_coeffs.shape[1]):
                     if i == 0:
-                        continue # There is no 1/x^0
-                    deriv_neg_coeffs[seg, i+1] = -1 * self.negative_coeffs[seg, i]*i
+                        # c ln(|x|) term -> c/x
+                        deriv_neg_coeffs[seg, 1] = self.negative_coeffs[seg, i]
+                    else:
+                        deriv_neg_coeffs[seg, i+1] = -1 * self.negative_coeffs[seg, i]*i
             
         deriv = PeicewisePolynomial(deriv_coeffs, deriv_breakpoints, deriv_neg_coeffs)
         return deriv
@@ -144,12 +155,12 @@ class PeicewisePolynomial(object):
             for seg in range(self.negative_coeffs.shape[0]):
                 for i in range(self.negative_coeffs.shape[1]):
                     if i == 0:
-                        continue # There is no 1/x^0
+                        assert self.negative_coeffs[seg, i] == 0.0, "Cannot take antiderivative of ln(|x|) terms"
                     if i == 1:
-                        # 1/x term! This needs to be a log... 
-                        assert self.negative_coeffs[seg, i] == 0.0, "Cannot deal with 1/x terms"
-                        continue
-                    antideriv_neg_coeffs[seg, i-1] = -1 * self.negative_coeffs[seg, i]/(i-1)
+                        # c/x term -> c ln(|x|) which we put in i=0. No change in sign or division 
+                        antideriv_neg_coeffs[seg, 0] = self.negative_coeffs[seg, i]
+                    else:
+                        antideriv_neg_coeffs[seg, i-1] = -1 * self.negative_coeffs[seg, i]/(i-1)
             
         antideriv = PeicewisePolynomial(antideriv_coeffs, antideriv_breakpoints, antideriv_neg_coeffs)
         return antideriv

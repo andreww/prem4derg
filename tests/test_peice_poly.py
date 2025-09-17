@@ -204,6 +204,42 @@ def test_recip_antideriv():
     npt.assert_allclose(calc_dpoly.coeffs, expected_int_coefs)
     npt.assert_allclose(calc_dpoly.negative_coeffs, expected_neg_int_coeffs)
 
+
+def test_log_deriv_int():
+    """
+    Tests for polynomial derivatives including terms like 1/x.
+
+    Note: y = 4x + 3 + 2/x + 3/x^2 + 5 ln(|x|)
+          dy/dx = 4 - 2/x^2 - 6/x^3 + 5/x
+          x = 0.5, dy/dx = -42
+          x = 3, dy/dx = 3.55555... + 5/3
+    And we can multiply everything by 10 and split the
+    polynomial.
+    """
+    poly = pp.PeicewisePolynomial(np.array([[3.0, 4.0],
+                                            [30.0, 40.0]]),
+                                  np.array([0.0, 2.0, 4.0]),
+                                  c_neg=np.array([[5.0, 2.0, 3.0],
+                                                  [50.0, 20.0, 30.0]]))
+    expected_deriv_coefs = np.array([[4.0], [40.0]])
+    expected_neg_deriv_coeffs = np.array([[0.0, 5.0, -2.0, -6.0],
+                                          [0.0, 50.0, -20.0, -60.0]])
+    calc_dpoly = poly.derivative()
+    npt.assert_allclose(calc_dpoly.coeffs, expected_deriv_coefs)
+    npt.assert_allclose(calc_dpoly.negative_coeffs, expected_neg_deriv_coeffs)
+
+    assert calc_dpoly(0.5) == -42.0
+    npt.assert_allclose(calc_dpoly(3.0), (3.55555555555+(5/3))*10.0)
+
+    # Do we get back to what we started with (without the constant)?
+    calc_ipoly = calc_dpoly.antiderivative()
+    npt.assert_allclose(calc_ipoly.coeffs, np.array([[0.0, 4.0], [0.0, 40.0]]))
+    npt.assert_allclose(calc_ipoly.negative_coeffs, np.array([[5.0, 2.0, 3.0], [50.0, 20.0, 30.0]]))
+
+    # Check the values
+    npt.assert_allclose(calc_ipoly(0.5), 2.0 + (5.0 * np.log(0.5)) + 4.0 + 12.0)
+    npt.assert_allclose(calc_ipoly(3.0), (40.0*3.0) + (50.0 * np.log(3.0)) + (20.0/3.0) + (30.0/9.0))
+
 def test_integrate():
     """
     Tests for polynomial integration.
