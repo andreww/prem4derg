@@ -103,6 +103,17 @@ class Prem(object):
         #   integrating this gives MOI:
         self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2/3) * np.pi
 
+        # Setup polynomial for gravity
+        G = 6.6743E-11
+        gravity_poly = self.density_poly.mult(self.r2_poly)
+        gravity_poly = gravity_poly.integrating_poly() # evaluate this to get int(rho.r^2 dr)
+        gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G # constants outside integral
+        over_r_sq_poly = pp.PeicewisePolynomial(np.zeros((12,1)), _bps, np.zeros((12,3)))
+        over_r_sq_poly.negative_coeffs[:,2] = 1.0/1000.0**2
+        gravity_poly = gravity_poly.mult(over_r_sq_poly) # Mult by 1/r^2
+        self.gravity_poly = gravity_poly # Evaluate to get gravity at r
+        
+
     def density(self, r, break_down=False):
         """
         Evaluate density in kg/m**3 at radii r (in km)
@@ -202,46 +213,19 @@ class Prem(object):
         m = self.mass(r)
         moif = moi / (m*(r_in_m**2))
         return moi, moif
-
-    def gravity_(self, r):
-        """
-        Evaluate acceleration due to gravity at radius r in m/s^2
-        """
-        G = 6.6743E-11
-        if np.ndim(r) == 0:
-            if r == 0:
-                g = 0
-            else:
-                g = self.mass_poly.integrate(0.0, r)/((r*1000)**2)*G
-        else:
-            g = np.zeros_like(r)
-            for i in range(r.size):
-                if r[i] == 0:
-                    g[i] = 0
-                else:
-                    g[i] = self.mass_poly.integrate(0.0, r[i]) / \
-                                                      ((r[i]*1000)**2)*G
-        return g
     
     def gravity(self, r):
-        G = 6.6743E-11
         if np.ndim(r) == 0:
             if r == 0.0:
                 return 0.0
-            poly = self.density_poly.mult(self.r2_poly)
-            poly = poly.integrating_poly()
-            poly.coeffs = poly.coeffs * 4.0 * np.pi * G
-            g = poly(r) / (r*1000.0)**2
+            g = self.gravity_poly(r)
         else:
             g = np.zeros_like(r)
             for i in range(r.size):
                 if r[i] == 0:
                     g[i] = 0
                 else:
-                    poly = self.density_poly.mult(self.r2_poly)
-                    poly = poly.integrating_poly()
-                    poly.coeffs = poly.coeffs * 4.0 * np.pi * G
-                    g[i] = poly(r[i]) / (r[i]*1000.0)**2  
+                    g[i] = self.gravity_poly(r[i])
         return g
 
     def grav_potential(self, r):
