@@ -350,3 +350,38 @@ def test_mult2():
     calc_poly_mult = poly1.mult(poly1)
     npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
     npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+
+def test_mult3():
+    """
+    Tests for polynomial multiplication.
+
+    Where only one includes 1/x terms etc. 
+    Note: (2x^2 + 3x + 4  + 3/x + 4/x^2) * (4x^2 + 2x + 1)
+        = 8x^4 + 16x^3 + 24x^2 + 23x + 26 + 11/x + 4/x^2
+    and we split the polynomials in two to excercise the
+    breakpoint checking. Also check that order does not matter
+    """
+    poly1 = pp.PeicewisePolynomial(np.array([[4.0, 3.0, 2.0],
+                                             [4.0, 3.0, 2.0]]),
+                                   np.array([0.0, 2.0, 4.0]),
+                                   np.array([[0.0, 3.0, 4.0],
+                                             [0.0, 3.0, 4.0]]))
+    poly2 = pp.PeicewisePolynomial(np.array([[1.0, 2.0, 4.0],
+                                             [1.0, 2.0, 4.0]]),
+                                   np.array([0.0, 2.0, 4.0]))
+    # Why do we have the x^5 term (it's zero, but not needed...)
+    expect_poly_mult = pp.PeicewisePolynomial(
+        np.array([[26.0, 23.0, 24.0, 16.0, 8.0, 0.0],
+                  [26.0, 23.0, 24.0, 16.0, 8.0, 0.0]]),
+        np.array([0.0, 2.0, 4.0]),
+        np.array([[0.0, 11.0, 4.0],
+                  [0.0, 11.0, 4.0]]))
+
+    calc_poly_mult = poly1.mult(poly2)
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+
+    # backwards
+    calc_poly_mult = poly2.mult(poly1)
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)

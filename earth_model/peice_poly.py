@@ -218,14 +218,17 @@ class PeicewisePolynomial(object):
         mult_coefs = np.zeros((self.coeffs.shape[0],
                                self.coeffs.shape[1]+other.coeffs.shape[1]))
         mult_negative_coefs = None
-        if (self.negative_coeffs is not None) or (other.negative_coeffs is not None):
-            # FIXME: what if only one has neg coeffs... 
+        if (self.negative_coeffs is not None) and (other.negative_coeffs is not None):
+            assert np.all(self.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in self"
+            assert np.all(other.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in other"
             mult_negative_coefs = np.zeros((self.negative_coeffs.shape[0],
                                            (self.negative_coeffs.shape[1]+other.negative_coeffs.shape[1])))
-            if self.negative_coeffs is not None:
-                assert np.all(self.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in self"
-            if other.negative_coeffs is not None:
-                assert np.all(other.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in other"
+        elif (self.negative_coeffs is not None):
+            assert np.all(self.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in self"
+            mult_negative_coefs = np.zeros((self.negative_coeffs.shape[0], self.negative_coeffs.shape[1]))
+        elif (other.negative_coeffs is not None):
+            assert np.all(other.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in other"
+            mult_negative_coefs = np.zeros((other.negative_coeffs.shape[0], other.negative_coeffs.shape[1])) 
 
         for seg in range(self.coeffs.shape[0]):
             for i in range(self.coeffs.shape[1]):
