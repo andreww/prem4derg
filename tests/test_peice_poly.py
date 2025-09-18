@@ -290,17 +290,12 @@ def test_mult():
     poly2 = pp.PeicewisePolynomial(np.array([[1.0, 2.0, 4.0],
                                              [1.0, 2.0, 4.0]]),
                                    np.array([0.0, 2.0, 4.0]))
-    # Why do we have the x^5 term (it's zero, but not needed...)
     expect_poly_mult = pp.PeicewisePolynomial(
-        np.array([[4.0, 11.0, 24.0, 16.0, 8.0, 0.0],
-                  [4.0, 11.0, 24.0, 16.0, 8.0, 0.0]]),
+        np.array([[4.0, 11.0, 24.0, 16.0, 8.0],
+                  [4.0, 11.0, 24.0, 16.0, 8.0]]),
         np.array([0.0, 2.0, 4.0]))
     calc_poly_mult = poly1.mult(poly2)
     npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
-
-    # TODO: why do we get x^5 coeff (it's 0, but not needed).
-    # Also, handle non-overlapping breakpoints (first chop the
-    # segments). Parameterise this test and do poly * const etc.
 
 def test_mult2():
     """
@@ -323,14 +318,12 @@ def test_mult2():
                                    np.array([0.0, 2.0, 4.0]),
                                    np.array([[0.0, 0.0, 2.0],
                                              [0.0, 0.0, 2.0]]))
-    # Why do we have the x^5 term (it's zero, but not needed...)
     expect_poly_mult = pp.PeicewisePolynomial(
-        np.array([[30.0, 23.0, 24.0, 16.0, 8.0, 0.0],
-                  [30.0, 23.0, 24.0, 16.0, 8.0, 0.0]]),
+        np.array([[30.0, 23.0, 24.0, 16.0, 8.0],
+                  [30.0, 23.0, 24.0, 16.0, 8.0]]),
         np.array([0.0, 2.0, 4.0]),
-        np.array([[0.0, 17.0, 12.0, 6.0, 8.0, 0.0],
-                  [0.0, 17.0, 12.0, 6.0, 8.0, 0.0]]))
-    # Also - why the trailing x^-5 term
+        np.array([[0.0, 17.0, 12.0, 6.0, 8.0],
+                  [0.0, 17.0, 12.0, 6.0, 8.0]]))
     calc_poly_mult = poly1.mult(poly2)
     npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
     npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
@@ -342,11 +335,11 @@ def test_mult2():
 
     # Square poly 1
     expect_poly_mult = pp.PeicewisePolynomial(
-        np.array([[50.0, 36.0, 25.0, 12.0, 4.0, 0.0],
-                  [50.0, 36.0, 25.0, 12.0, 4.0, 0.0]]),
+        np.array([[50.0, 36.0, 25.0, 12.0, 4.0],
+                  [50.0, 36.0, 25.0, 12.0, 4.0]]),
         np.array([0.0, 2.0, 4.0]),
-        np.array([[0.0, 48.0, 41.0, 24.0, 16.0, 0.0],
-                  [0.0, 48.0, 41.0, 24.0, 16.0, 0.0]]))
+        np.array([[0.0, 48.0, 41.0, 24.0, 16.0],
+                  [0.0, 48.0, 41.0, 24.0, 16.0]]))
     calc_poly_mult = poly1.mult(poly1)
     npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
     npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
@@ -369,10 +362,9 @@ def test_mult3():
     poly2 = pp.PeicewisePolynomial(np.array([[1.0, 2.0, 4.0],
                                              [1.0, 2.0, 4.0]]),
                                    np.array([0.0, 2.0, 4.0]))
-    # Why do we have the x^5 term (it's zero, but not needed...)
     expect_poly_mult = pp.PeicewisePolynomial(
-        np.array([[26.0, 23.0, 24.0, 16.0, 8.0, 0.0],
-                  [26.0, 23.0, 24.0, 16.0, 8.0, 0.0]]),
+        np.array([[26.0, 23.0, 24.0, 16.0, 8.0],
+                  [26.0, 23.0, 24.0, 16.0, 8.0]]),
         np.array([0.0, 2.0, 4.0]),
         np.array([[0.0, 11.0, 4.0],
                   [0.0, 11.0, 4.0]]))

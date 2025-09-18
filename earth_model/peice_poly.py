@@ -216,13 +216,13 @@ class PeicewisePolynomial(object):
                                      'different number of breakpoints'
         mult_breakpoints = self.breakpoints
         mult_coefs = np.zeros((self.coeffs.shape[0],
-                               self.coeffs.shape[1]+other.coeffs.shape[1]))
+                               self.coeffs.shape[1]+other.coeffs.shape[1]-1))
         mult_negative_coefs = None
         if (self.negative_coeffs is not None) and (other.negative_coeffs is not None):
             assert np.all(self.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in self"
             assert np.all(other.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in other"
             mult_negative_coefs = np.zeros((self.negative_coeffs.shape[0],
-                                           (self.negative_coeffs.shape[1]+other.negative_coeffs.shape[1])))
+                                           (self.negative_coeffs.shape[1]+other.negative_coeffs.shape[1]-1)))
         elif (self.negative_coeffs is not None):
             assert np.all(self.negative_coeffs[:,0] == 0.0), "Cannot multiply ln(x) terms in self"
             mult_negative_coefs = np.zeros((self.negative_coeffs.shape[0], self.negative_coeffs.shape[1]))
@@ -264,6 +264,9 @@ class PeicewisePolynomial(object):
                             mult_negative_coefs[seg, neg_index] = mult_negative_coefs[seg, neg_index] +\
                                      self.negative_coeffs[seg, i] * other.negative_coeffs[seg,j]
 
+
+        # TODO: handle non-overlapping breakpoints (first chop the
+        # segments). Also implement do poly * const etc.
 
         mult_poly = PeicewisePolynomial(mult_coefs, mult_breakpoints, mult_negative_coefs)
         return mult_poly
