@@ -64,4 +64,4 @@ def test_prem_pressure(radius, expected_pressure):
     p_calc = prem.pressure(radius)
     # For the numerical integration we need a step size of ~1 km to get
     # reasonable performance, which leads to errors of ~1 GPa...
-    npt.assert_allclose(p_calc, expected_pressure, atol=1.0)
+    npt.assert_allclose(p_calc, expected_pressure, atol=0.4)

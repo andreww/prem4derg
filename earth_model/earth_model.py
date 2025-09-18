@@ -88,8 +88,8 @@ class Prem(object):
         # setup polynomials for mass. This is 4*pi*\int rho(r)*r^2 dr
         r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]),
                             (breakpoints.size - 1, 1))
-        r2_poly = pp.PeicewisePolynomial(r2_params, breakpoints)
-        self.mass_poly = self.density_poly.mult(r2_poly)
+        self.r2_poly = pp.PeicewisePolynomial(r2_params, breakpoints)
+        self.mass_poly = self.density_poly.mult(self.r2_poly)
         self.mass_poly = self.mass_poly.antiderivative()
         #  integrating this gives mass:
         self.mass_poly.coeffs = self.mass_poly.coeffs * 4.0 * np.pi
@@ -103,6 +103,24 @@ class Prem(object):
         #   integrating this gives MOI:
         self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2/3) * np.pi
 
+        # Setup polynomial for gravity
+        G = 6.6743E-11
+        gravity_poly = self.density_poly.mult(self.r2_poly)
+        gravity_poly = gravity_poly.integrating_poly() # evaluate this to get int(rho.r^2 dr)
+        gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G # constants outside integral
+        over_r_sq_poly = pp.PeicewisePolynomial(np.zeros((breakpoints.size - 1,1)), breakpoints, 
+                                                np.zeros((breakpoints.size - 1,3)))
+        over_r_sq_poly.negative_coeffs[:,2] = 1.0/1000.0**2
+        gravity_poly = gravity_poly.mult(over_r_sq_poly) # Mult by 1/r^2
+        self.gravity_poly = gravity_poly # Evaluate to get gravity at r
+
+        # Setup polynomial for pressure - integrate from r to r_earth to get pressure
+        self.pressure_poly = self.gravity_poly.mult(self.density_poly)
+        self.pressure_poly = self.pressure_poly.antiderivative()
+        # Pressure units (/1E9) and density units (*1000.0)
+        self.pressure_poly.coeffs = self.pressure_poly.coeffs * 1000.0 / 1.0E9 
+        self.pressure_poly.negative_coeffs = self.pressure_poly.negative_coeffs * 1000.0 / 1.0E9 
+ 
     def density(self, r, break_down=False):
         """
         Evaluate density in kg/m**3 at radii r (in km)
@@ -202,25 +220,19 @@ class Prem(object):
         m = self.mass(r)
         moif = moi / (m*(r_in_m**2))
         return moi, moif
-
+    
     def gravity(self, r):
-        """
-        Evaluate acceleration due to gravity at radius r in m/s^2
-        """
-        G = 6.6743E-11
         if np.ndim(r) == 0:
-            if r == 0:
-                g = 0
-            else:
-                g = self.mass_poly.integrate(0.0, r)/((r*1000)**2)*G
+            if r == 0.0:
+                return 0.0
+            g = self.gravity_poly(r)
         else:
             g = np.zeros_like(r)
             for i in range(r.size):
                 if r[i] == 0:
                     g[i] = 0
                 else:
-                    g[i] = self.mass_poly.integrate(0.0, r[i]) / \
-                                                      ((r[i]*1000)**2)*G
+                    g[i] = self.gravity_poly(r[i])
         return g
 
     def grav_potential(self, r):
@@ -239,30 +251,18 @@ class Prem(object):
                     phi[i] = -1 * self.mass_poly.integrate(0.0, r[i]) / \
                                                           (r[i]*1000)*G
         return phi
-
+    
     def pressure(self, r):
         """
         Evaluate pressure (in GPa) at radius r (in km)
         """
-        # NB: this is done numerically, because otherise
-        # I need to work out how to express g as a polynomial,
-        # multiply this by rho, then do the integral inwards.
-        # all a bit of a faff!
         if np.ndim(r) == 0:
-            # 10 km grid spacing
-            rs = np.arange(r, self.r_earth, 1.0)
-            g = self.gravity(rs)
-            rho = self.density(rs)
-            ps = spint.cumulative_trapezoid((-g*rho)[::-1], rs[::-1]*1000.0, initial=0)
-            pressure = ps[-1]/1E9
+            p = self.pressure_poly.integrate(r, _r_earth)
         else:
-            # Assume I have been fed something I can integrate
-            g = self.gravity(r)
-            rho = self.density(r)
-            pressure = spint.cumulative_trapezoid((-g*rho)[::-1],
-                                      r[::-1]*1000.0, initial=0)
-            pressure = pressure[::-1]/1E9
-        return pressure
+            p = np.zeros_like(r)
+            for i in range(r.size):
+                p[i] = self.pressure_poly.integrate(r[i], _r_earth)
+        return p
 
     def tabulate_model_inwards(self, min_step):
         """
