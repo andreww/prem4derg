@@ -6,7 +6,6 @@ Support for PREM-like 1D Earth models
 """
 
 import numpy as np
-import scipy.integrate as spint  # type: ignore
 
 from . import peice_poly as pp
 
@@ -106,21 +105,25 @@ class Prem(object):
         # Setup polynomial for gravity
         G = 6.6743E-11
         gravity_poly = self.density_poly.mult(self.r2_poly)
-        gravity_poly = gravity_poly.integrating_poly() # evaluate this to get int(rho.r^2 dr)
-        gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G # constants outside integral
-        over_r_sq_poly = pp.PeicewisePolynomial(np.zeros((breakpoints.size - 1,1)), breakpoints, 
-                                                np.zeros((breakpoints.size - 1,3)))
-        over_r_sq_poly.negative_coeffs[:,2] = 1.0/1000.0**2
-        gravity_poly = gravity_poly.mult(over_r_sq_poly) # Mult by 1/r^2
-        self.gravity_poly = gravity_poly # Evaluate to get gravity at r
+        # evaluate this to get int(rho.r^2 dr)
+        gravity_poly = gravity_poly.integrating_poly()
+        # constants outside integral
+        gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G
+        over_r_sq_poly = pp.PeicewisePolynomial(
+            np.zeros((breakpoints.size - 1, 1)), breakpoints,
+            np.zeros((breakpoints.size - 1, 3)))
+        over_r_sq_poly.negative_coeffs[:, 2] = 1.0/1000.0**2
+        gravity_poly = gravity_poly.mult(over_r_sq_poly)  # Mult by 1/r^2
+        self.gravity_poly = gravity_poly  # Evaluate to get gravity at r
 
-        # Setup polynomial for pressure - integrate from r to r_earth to get pressure
+        # Setup polynomial for pressure:
+        # integrate from r to r_earth to get pressure
         self.pressure_poly = self.gravity_poly.mult(self.density_poly)
         self.pressure_poly = self.pressure_poly.antiderivative()
         # Pressure units (/1E9) and density units (*1000.0)
-        self.pressure_poly.coeffs = self.pressure_poly.coeffs * 1000.0 / 1.0E9 
-        self.pressure_poly.negative_coeffs = self.pressure_poly.negative_coeffs * 1000.0 / 1.0E9 
- 
+        self.pressure_poly.coeffs *= 1000.0 / 1.0E9
+        self.pressure_poly.negative_coeffs *= 1000.0 / 1.0E9
+
     def density(self, r, break_down=False):
         """
         Evaluate density in kg/m**3 at radii r (in km)
@@ -220,7 +223,7 @@ class Prem(object):
         m = self.mass(r)
         moif = moi / (m*(r_in_m**2))
         return moi, moif
-    
+
     def gravity(self, r):
         if np.ndim(r) == 0:
             if r == 0.0:
@@ -251,7 +254,7 @@ class Prem(object):
                     phi[i] = -1 * self.mass_poly.integrate(0.0, r[i]) / \
                                                           (r[i]*1000)*G
         return phi
-    
+
     def pressure(self, r):
         """
         Evaluate pressure (in GPa) at radius r (in km)
