@@ -270,20 +270,3 @@ class PeicewisePolynomial(object):
 
         mult_poly = PeicewisePolynomial(mult_coefs, mult_breakpoints, mult_negative_coefs)
         return mult_poly
-    
-    def div_xsq(self):
-        """
-        The polynomial is multiplied by x^-2
-        """
-        # Ideally we should implement polynomial division, but
-        # this is all I need for now
-        assert np.allclose(self.coeffs[:, 0], 0.0)
-        assert np.allclose(self.coeffs[:, 1], 0.0) 
-        div_breakpoints = self.breakpoints
-        # degree of self - degree of other must be positive
-        div_coeffs = np.zeros((self.coeffs.shape[0], self.coeffs.shape[1]-2))
-        for seg in range(self.coeffs.shape[0]):
-            for i in range(self.coeffs.shape[1]):
-                div_coeffs[seg, i-2] = self.coeffs[seg, i] 
-        div_poly = PeicewisePolynomial(div_coeffs, div_breakpoints)
-        return div_poly
