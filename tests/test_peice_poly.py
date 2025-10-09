@@ -378,6 +378,15 @@ def test_mult3():
     npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
     npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
 
+    # overloaded
+    calc_poly_mult = poly1 * poly2
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+
+    calc_poly_mult = poly2 * poly1
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+
 
 def test_scalar_mult():
     # Without negative coefficents, mult by 10
@@ -413,3 +422,50 @@ def test_scalar_mult():
     calc_poly_mult = poly1.scalar_mult(10)
     npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
 
+def test_scalar_mult_overload():
+    # Without negative coefficents, mult by 10
+    poly1 = pp.PeicewisePolynomial(np.array([[4.0, 3.0, 2.0],
+                                             [4.0, 3.0, 2.0]]),
+                                   np.array([0.0, 2.0, 4.0]))
+    expect_poly_mult = pp.PeicewisePolynomial(
+        np.array([[40.0, 30.0, 20.0],
+                  [40.0, 30.0, 20.0]]),
+        np.array([0.0, 2.0, 4.0]))
+    calc_poly_mult = poly1 * 10.0
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    assert calc_poly_mult.negative_coeffs is None
+    calc_poly_mult = poly1 * 10
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    assert calc_poly_mult.negative_coeffs is None
+
+    calc_poly_mult = 10.0 * poly1
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    assert calc_poly_mult.negative_coeffs is None
+    calc_poly_mult = 10 * poly1
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    assert calc_poly_mult.negative_coeffs is None
+
+
+    # With negative coefficents, mult by 10
+    poly1 = pp.PeicewisePolynomial(np.array([[4.0, 3.0, 2.0],
+                                             [4.0, 3.0, 2.0]]),
+                                   np.array([0.0, 2.0, 4.0]),
+                                   np.array([[4.0, 3.0, 2.0],
+                                             [4.0, 3.0, 2.0]]))
+    expect_poly_mult = pp.PeicewisePolynomial(
+        np.array([[40.0, 30.0, 20.0],
+                  [40.0, 30.0, 20.0]]),
+        np.array([0.0, 2.0, 4.0]),
+        np.array([[40.0, 30.0, 20.0],
+                  [40.0, 30.0, 20.0]]))
+    calc_poly_mult = poly1 * 10.0
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+    calc_poly_mult = poly1 * 10
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+    
+    calc_poly_mult = 10.0 * poly1
+    npt.assert_allclose(calc_poly_mult.coeffs, expect_poly_mult.coeffs)
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)
+    calc_poly_mult = 10 * poly1
+    npt.assert_allclose(calc_poly_mult.negative_coeffs, expect_poly_mult.negative_coeffs)

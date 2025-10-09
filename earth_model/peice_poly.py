@@ -315,3 +315,25 @@ class PeicewisePolynomial(object):
         result_poly = PeicewisePolynomial(result_coeffs, result_bps,
                                           result_neg_coeffs)
         return result_poly
+
+    def __mul__(self, other):
+        """
+        Overload * 
+        
+        Returns a new PeicewisePolynomal resulting from the 
+        multiplication
+        """
+        if isinstance(other, int) or isinstance(other, float):
+            result = self.scalar_mult(other)
+
+        if isinstance(other, PeicewisePolynomial):
+            result = self.mult(other)
+
+        return result
+    
+    def __rmul__(self, other):
+        """
+        Overload * for sclar * PP
+        """
+        return self.__mul__(other)
+
