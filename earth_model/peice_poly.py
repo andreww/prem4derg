@@ -217,9 +217,17 @@ class PeicewisePolynomial(object):
         return PeicewisePolynomial(ip_coeffs, antiderivative.breakpoints)
 
     def mult(self, other):
-        # FIXME - for this approach brakepoints need to be same place too
+        """
+        Multiplication of peicewise polynomials
+
+        Returns a new PeicewisePolynomial equal to the product of two
+        existing PeicewisePolynomials.
+
+        Note that in the current implementation the breakpoints must
+        match.
+        """
         assert self.coeffs.shape[0] == other.coeffs.shape[0], \
-                                     'different number of breakpoints'
+            'different number of breakpoints'
         mult_breakpoints = self.breakpoints
         mult_coefs = np.zeros((self.coeffs.shape[0],
                                self.coeffs.shape[1]+other.coeffs.shape[1]-1))
@@ -289,3 +297,43 @@ class PeicewisePolynomial(object):
         mult_poly = PeicewisePolynomial(mult_coefs, mult_breakpoints,
                                         mult_negative_coefs)
         return mult_poly
+
+    def scalar_mult(self, scalar):
+        """
+        Multiplication of a peicewise polynomial and a scalar
+
+        Returns a new PeicewisePolynomal resulting from the multiplication
+        of a peicewise polynomial by a scalar (real or int).
+        """
+        result_coeffs = np.copy(self.coeffs) * scalar
+        result_bps = np.copy(self.breakpoints)
+        if self.negative_coeffs is None:
+            result_neg_coeffs = None
+        else:
+            result_neg_coeffs = np.copy(self.negative_coeffs) * scalar
+
+        result_poly = PeicewisePolynomial(result_coeffs, result_bps,
+                                          result_neg_coeffs)
+        return result_poly
+
+    def __mul__(self, other):
+        """
+        Overload * 
+        
+        Returns a new PeicewisePolynomal resulting from the 
+        multiplication
+        """
+        if isinstance(other, int) or isinstance(other, float):
+            result = self.scalar_mult(other)
+
+        if isinstance(other, PeicewisePolynomial):
+            result = self.mult(other)
+
+        return result
+    
+    def __rmul__(self, other):
+        """
+        Overload * for sclar * PP
+        """
+        return self.__mul__(other)
+
