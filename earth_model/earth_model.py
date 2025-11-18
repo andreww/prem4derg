@@ -278,7 +278,7 @@ class OneDModel(object):
                 qks = np.append(qks, qk)
                 qms = np.append(qms, qm)
 
-        result = np.core.records.fromarrays(
+        result = np.rec.fromarrays(
             [depths, radii, densities, vps, vss, qks, qms],
             names="depth, radius, density, vp, vs, qkappa, qshear",
         )
@@ -378,7 +378,7 @@ class OneDModel(object):
                 qks = np.append(qks, qk)
                 qms = np.append(qms, qm)
 
-        result = np.core.records.fromarrays(
+        result = np.rec.fromarrays(
             [depths, radii, densities, vps, vss, qks, qms],
             names="depth, radius, density, vp, vs, qkappa, qshear",
         )
