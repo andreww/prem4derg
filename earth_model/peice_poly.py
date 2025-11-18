@@ -4,6 +4,7 @@
 Peicewise polynomials like PREM
 
 """
+
 import numpy as np
 
 
@@ -95,8 +96,7 @@ class PeicewisePolynomial(object):
             return pos_coef, neg_coef
         if break_down:
             for i in range(self.breakpoints.size):
-                if ((x > self.breakpoints[i])
-                   and (x <= self.breakpoints[i+1])):
+                if (x > self.breakpoints[i]) and (x <= self.breakpoints[i + 1]):
                     pos_coef = self.coeffs[i, :]
                     if self.negative_coeffs is None:
                         neg_coef = None
@@ -105,8 +105,7 @@ class PeicewisePolynomial(object):
                     return pos_coef, neg_coef
         else:
             for i in range(self.breakpoints.size):
-                if ((x >= self.breakpoints[i])
-                   and (x < self.breakpoints[i+1])):
+                if (x >= self.breakpoints[i]) and (x < self.breakpoints[i + 1]):
                     pos_coef = self.coeffs[i, :]
                     if self.negative_coeffs is None:
                         neg_coef = None
@@ -117,58 +116,59 @@ class PeicewisePolynomial(object):
 
     def derivative(self):
         deriv_breakpoints = self.breakpoints
-        deriv_coeffs = np.zeros((self.coeffs.shape[0],
-                                 self.coeffs.shape[1]-1))
+        deriv_coeffs = np.zeros((self.coeffs.shape[0], self.coeffs.shape[1] - 1))
         for seg in range(self.coeffs.shape[0]):
             for i in range(self.coeffs.shape[1]):
                 if i == 0:
                     continue  # Throw away term for x**0
-                deriv_coeffs[seg, i-1] = self.coeffs[seg, i]*i
+                deriv_coeffs[seg, i - 1] = self.coeffs[seg, i] * i
 
         deriv_neg_coeffs = None
         if self.negative_coeffs is not None:
-            deriv_neg_coeffs = np.zeros((self.negative_coeffs.shape[0],
-                                         self.negative_coeffs.shape[1]+1))
+            deriv_neg_coeffs = np.zeros(
+                (self.negative_coeffs.shape[0], self.negative_coeffs.shape[1] + 1)
+            )
             for seg in range(self.negative_coeffs.shape[0]):
                 for i in range(self.negative_coeffs.shape[1]):
                     if i == 0:
                         # c ln(|x|) term -> c/x
                         deriv_neg_coeffs[seg, 1] = self.negative_coeffs[seg, i]
                     else:
-                        deriv_neg_coeffs[seg, i+1] = -1 * \
-                            self.negative_coeffs[seg, i]*i
-        deriv = PeicewisePolynomial(deriv_coeffs, deriv_breakpoints,
-                                    deriv_neg_coeffs)
+                        deriv_neg_coeffs[seg, i + 1] = (
+                            -1 * self.negative_coeffs[seg, i] * i
+                        )
+        deriv = PeicewisePolynomial(deriv_coeffs, deriv_breakpoints, deriv_neg_coeffs)
         return deriv
 
     def antiderivative(self):
         antideriv_breakpoints = self.breakpoints
-        antideriv_coeffs = np.zeros((self.coeffs.shape[0],
-                                     self.coeffs.shape[1]+1))
+        antideriv_coeffs = np.zeros((self.coeffs.shape[0], self.coeffs.shape[1] + 1))
         for seg in range(self.coeffs.shape[0]):
             for i in range(self.coeffs.shape[1]):
-                antideriv_coeffs[seg, i+1] = self.coeffs[seg, i]/(i+1)
+                antideriv_coeffs[seg, i + 1] = self.coeffs[seg, i] / (i + 1)
 
         antideriv_neg_coeffs = None
         if self.negative_coeffs is not None:
-            antideriv_neg_coeffs = np.zeros((self.negative_coeffs.shape[0],
-                                             self.negative_coeffs.shape[1]-1))
+            antideriv_neg_coeffs = np.zeros(
+                (self.negative_coeffs.shape[0], self.negative_coeffs.shape[1] - 1)
+            )
             for seg in range(self.negative_coeffs.shape[0]):
                 for i in range(self.negative_coeffs.shape[1]):
                     if i == 0:
-                        assert self.negative_coeffs[seg, i] == 0.0, \
+                        assert self.negative_coeffs[seg, i] == 0.0, (
                             "Cannot take antiderivative of ln(|x|) terms"
+                        )
                     if i == 1:
                         # c/x term -> c ln(|x|) which we put in i=0. No change
                         # in sign or division
-                        antideriv_neg_coeffs[seg, 0] = \
-                            self.negative_coeffs[seg, i]
+                        antideriv_neg_coeffs[seg, 0] = self.negative_coeffs[seg, i]
                     else:
-                        antideriv_neg_coeffs[seg, i-1] = -1 * \
-                            self.negative_coeffs[seg, i]/(i-1)
-        antideriv = PeicewisePolynomial(antideriv_coeffs,
-                                        antideriv_breakpoints,
-                                        antideriv_neg_coeffs)
+                        antideriv_neg_coeffs[seg, i - 1] = (
+                            -1 * self.negative_coeffs[seg, i] / (i - 1)
+                        )
+        antideriv = PeicewisePolynomial(
+            antideriv_coeffs, antideriv_breakpoints, antideriv_neg_coeffs
+        )
         return antideriv
 
     def integrate(self, a, b):
@@ -179,15 +179,15 @@ class PeicewisePolynomial(object):
             if bp > lower_bound:
                 if self.breakpoints[bpi] >= b:
                     # Just the one segment left - add it and end
-                    integral = integral + (self(b, break_down=True) -
-                                           self(lower_bound))
+                    integral = integral + (self(b, break_down=True) - self(lower_bound))
                     # print(integral, lower_bound, b, 'done')
                     break
                 else:
                     # segment from lower bound to bp
                     # add it, increment lower_bound and contiue
-                    integral = integral + (self(bp, break_down=True) -
-                                           self(lower_bound))
+                    integral = integral + (
+                        self(bp, break_down=True) - self(lower_bound)
+                    )
                     # print(integral, lower_bound, bp)
                     lower_bound = bp
 
@@ -212,80 +212,96 @@ class PeicewisePolynomial(object):
             ip_coeffs[bpi, 0] = ip_coeffs[bpi, 0] - antiderivative(bp)
             # add all the other segments
             if bpi > 0:
-                ip_coeffs[bpi, 0] = ip_coeffs[bpi, 0] + \
-                    antiderivative.integrate(0, bp)
+                ip_coeffs[bpi, 0] = ip_coeffs[bpi, 0] + antiderivative.integrate(0, bp)
         return PeicewisePolynomial(ip_coeffs, antiderivative.breakpoints)
 
     def mult(self, other):
         # FIXME - for this approach brakepoints need to be same place too
-        assert self.coeffs.shape[0] == other.coeffs.shape[0], \
-                                     'different number of breakpoints'
+        assert self.coeffs.shape[0] == other.coeffs.shape[0], (
+            "different number of breakpoints"
+        )
         mult_breakpoints = self.breakpoints
-        mult_coefs = np.zeros((self.coeffs.shape[0],
-                               self.coeffs.shape[1]+other.coeffs.shape[1]-1))
+        mult_coefs = np.zeros(
+            (self.coeffs.shape[0], self.coeffs.shape[1] + other.coeffs.shape[1] - 1)
+        )
         mult_negative_coefs = None
-        if ((self.negative_coeffs is not None) and
-                (other.negative_coeffs is not None)):
-            assert np.all(self.negative_coeffs[:, 0] == 0.0), \
+        if (self.negative_coeffs is not None) and (other.negative_coeffs is not None):
+            assert np.all(self.negative_coeffs[:, 0] == 0.0), (
                 "Cannot multiply ln(x) terms in self"
-            assert np.all(other.negative_coeffs[:, 0] == 0.0), \
+            )
+            assert np.all(other.negative_coeffs[:, 0] == 0.0), (
                 "Cannot multiply ln(x) terms in other"
-            mult_negative_coefs = np.zeros((self.negative_coeffs.shape[0],
-                                           (self.negative_coeffs.shape[1] +
-                                            other.negative_coeffs.shape[1] - 1)
-                                            ))
-        elif (self.negative_coeffs is not None):
-            assert np.all(self.negative_coeffs[:, 0] == 0.0), \
+            )
+            mult_negative_coefs = np.zeros(
+                (
+                    self.negative_coeffs.shape[0],
+                    (
+                        self.negative_coeffs.shape[1]
+                        + other.negative_coeffs.shape[1]
+                        - 1
+                    ),
+                )
+            )
+        elif self.negative_coeffs is not None:
+            assert np.all(self.negative_coeffs[:, 0] == 0.0), (
                 "Cannot multiply ln(x) terms in self"
-            mult_negative_coefs = np.zeros((self.negative_coeffs.shape[0],
-                                            self.negative_coeffs.shape[1]))
-        elif (other.negative_coeffs is not None):
-            assert np.all(other.negative_coeffs[:, 0] == 0.0), \
+            )
+            mult_negative_coefs = np.zeros(
+                (self.negative_coeffs.shape[0], self.negative_coeffs.shape[1])
+            )
+        elif other.negative_coeffs is not None:
+            assert np.all(other.negative_coeffs[:, 0] == 0.0), (
                 "Cannot multiply ln(x) terms in other"
-            mult_negative_coefs = np.zeros((other.negative_coeffs.shape[0],
-                                            other.negative_coeffs.shape[1]))
+            )
+            mult_negative_coefs = np.zeros(
+                (other.negative_coeffs.shape[0], other.negative_coeffs.shape[1])
+            )
 
         for seg in range(self.coeffs.shape[0]):
             for i in range(self.coeffs.shape[1]):
-
                 for j in range(other.coeffs.shape[1]):
-                    mult_coefs[seg, i+j] = mult_coefs[seg, i+j] + \
-                                 self.coeffs[seg, i] * other.coeffs[seg, j]
+                    mult_coefs[seg, i + j] = (
+                        mult_coefs[seg, i + j]
+                        + self.coeffs[seg, i] * other.coeffs[seg, j]
+                    )
                 if other.negative_coeffs is not None:
                     for j in range(1, other.negative_coeffs.shape[1]):
                         index = i - j
                         if index >= 0:
                             # Still a positive index, includes 0 (cost terms)
-                            mult_coefs[seg, index] += self.coeffs[seg, i] * \
-                                other.negative_coeffs[seg, j]
+                            mult_coefs[seg, index] += (
+                                self.coeffs[seg, i] * other.negative_coeffs[seg, j]
+                            )
                         else:
                             # negative index - put in -1*index of neg results
-                            mult_negative_coefs[seg, -1*index] += \
-                                self.coeffs[seg, i] * \
-                                other.negative_coeffs[seg, j]
+                            mult_negative_coefs[seg, -1 * index] += (
+                                self.coeffs[seg, i] * other.negative_coeffs[seg, j]
+                            )
 
             if self.negative_coeffs is not None:
                 for i in range(1, self.negative_coeffs.shape[1]):
                     for j in range(other.coeffs.shape[1]):
                         index = j - i
                         if index >= 0:
-                            mult_coefs[seg, index] += \
-                                self.negative_coeffs[seg, i] *\
-                                other.coeffs[seg, j]
+                            mult_coefs[seg, index] += (
+                                self.negative_coeffs[seg, i] * other.coeffs[seg, j]
+                            )
                         else:
-                            mult_negative_coefs[seg, -1*index] += \
-                                    self.negative_coeffs[seg, i] * \
-                                    other.coeffs[seg, j]
+                            mult_negative_coefs[seg, -1 * index] += (
+                                self.negative_coeffs[seg, i] * other.coeffs[seg, j]
+                            )
                     if other.negative_coeffs is not None:
                         for j in range(1, other.negative_coeffs.shape[1]):
                             neg_index = i + j
-                            mult_negative_coefs[seg, neg_index] += \
-                                self.negative_coeffs[seg, i] * \
-                                other.negative_coeffs[seg, j]
+                            mult_negative_coefs[seg, neg_index] += (
+                                self.negative_coeffs[seg, i]
+                                * other.negative_coeffs[seg, j]
+                            )
 
         # TODO: handle non-overlapping breakpoints (first chop the
         # segments). Also implement do poly * const etc.
 
-        mult_poly = PeicewisePolynomial(mult_coefs, mult_breakpoints,
-                                        mult_negative_coefs)
+        mult_poly = PeicewisePolynomial(
+            mult_coefs, mult_breakpoints, mult_negative_coefs
+        )
         return mult_poly

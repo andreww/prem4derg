@@ -12,48 +12,75 @@ from . import peice_poly as pp
 
 # Default parameters for isotropic PREM
 _r_earth = 6371.0
-_bps = np.array([0.0, 1221.5, 3480.0, 3630.0, 5600.0, 5701.0, 5771.0,
-                 5971.0, 6151.0, 6291.0, 6346.6, 6356.0, 6371.0])
-_density_params = np.array([[13.0885,  0.0000, -8.8381,  0.0000],
-                            [12.5815, -1.2638, -3.6426, -5.5281],
-                            [7.9565, -6.4761,  5.5283, -3.0807],
-                            [7.9565, -6.4761,  5.5283, -3.0807],
-                            [7.9565, -6.4761,  5.5283, -3.0807],
-                            [5.3197, -1.4836,  0.0000,  0.0000],
-                            [11.2494, -8.0298,  0.0000,  0.0000],
-                            [7.1089, -3.8045,  0.00002,  0.0000],
-                            [2.6910,  0.6924,  0.0000,  0.0000],
-                            [2.6910,  0.6924,  0.0000,  0.0000],
-                            [2.9000,  0.0000,  0.0000,  0.0000],
-                            [2.6000,  0.0000,  0.0000,  0.0000]])
+_bps = np.array(
+    [
+        0.0,
+        1221.5,
+        3480.0,
+        3630.0,
+        5600.0,
+        5701.0,
+        5771.0,
+        5971.0,
+        6151.0,
+        6291.0,
+        6346.6,
+        6356.0,
+        6371.0,
+    ]
+)
+_density_params = np.array(
+    [
+        [13.0885, 0.0000, -8.8381, 0.0000],
+        [12.5815, -1.2638, -3.6426, -5.5281],
+        [7.9565, -6.4761, 5.5283, -3.0807],
+        [7.9565, -6.4761, 5.5283, -3.0807],
+        [7.9565, -6.4761, 5.5283, -3.0807],
+        [5.3197, -1.4836, 0.0000, 0.0000],
+        [11.2494, -8.0298, 0.0000, 0.0000],
+        [7.1089, -3.8045, 0.00002, 0.0000],
+        [2.6910, 0.6924, 0.0000, 0.0000],
+        [2.6910, 0.6924, 0.0000, 0.0000],
+        [2.9000, 0.0000, 0.0000, 0.0000],
+        [2.6000, 0.0000, 0.0000, 0.0000],
+    ]
+)
 _density_params[:, 0] = _density_params[:, 0] * 1000.0
 _density_params[:, 1] = (_density_params[:, 1] * 1000.0) / _r_earth
 _density_params[:, 2] = (_density_params[:, 2] * 1000.0) / (_r_earth**2)
 _density_params[:, 3] = (_density_params[:, 3] * 1000.0) / (_r_earth**3)
-_vp_params = np.array([[11.2622,   0.0000, -6.3640,   0.0000],
-                      [11.0487,  -4.0362,  4.8023, -13.5732],
-                      [15.3891,  -5.3181,  5.5242,  -2.5514],
-                      [24.9520, -40.4673, 51.4832, -26.6419],
-                      [29.2766, -23.6027,  5.5242,  -2.5514],
-                      [19.0957,  -9.8672,  0.0000,   0.0000],
-                      [39.7027, -32.6166,  0.0000,   0.0000],
-                      [20.3926, -12.2569,  0.0000,   0.0000],
-                      [4.1875,   3.9382,  0.0000,   0.0000],
-                      [4.1875,   3.9382,  0.0000,   0.0000],
-                      [6.8000,   0.0000,  0.0000,   0.0000],
-                      [5.8000,   0.0000,  0.0000,   0.0000]])
-_vs_params = np.array([[3.6678,   0.0000,  -4.4475,  0.0000],
-                      [0.0000,   0.0000,   0.0000,  0.0000],
-                      [6.9254,   1.4672,  -2.0834,  0.9783],
-                      [11.1671, -13.7818,  17.4575, -9.2777],
-                      [22.3459, -17.2473,  -2.0834,  0.9783],
-                      [9.9839,  -4.9324,   0.0000,  0.0000],
-                      [22.3512, -18.5856,   0.0000,  0.0000],
-                      [8.9496,  -4.4597,   0.0000,  0.0000],
-                      [2.1519,   2.3481,   0.0000,  0.0000],
-                      [2.1519,   2.3481,   0.0000,  0.0000],
-                      [3.9000,   0.0000,   0.0000,  0.0000],
-                      [3.2000,   0.0000,   0.0000,  0.0000]])
+_vp_params = np.array(
+    [
+        [11.2622, 0.0000, -6.3640, 0.0000],
+        [11.0487, -4.0362, 4.8023, -13.5732],
+        [15.3891, -5.3181, 5.5242, -2.5514],
+        [24.9520, -40.4673, 51.4832, -26.6419],
+        [29.2766, -23.6027, 5.5242, -2.5514],
+        [19.0957, -9.8672, 0.0000, 0.0000],
+        [39.7027, -32.6166, 0.0000, 0.0000],
+        [20.3926, -12.2569, 0.0000, 0.0000],
+        [4.1875, 3.9382, 0.0000, 0.0000],
+        [4.1875, 3.9382, 0.0000, 0.0000],
+        [6.8000, 0.0000, 0.0000, 0.0000],
+        [5.8000, 0.0000, 0.0000, 0.0000],
+    ]
+)
+_vs_params = np.array(
+    [
+        [3.6678, 0.0000, -4.4475, 0.0000],
+        [0.0000, 0.0000, 0.0000, 0.0000],
+        [6.9254, 1.4672, -2.0834, 0.9783],
+        [11.1671, -13.7818, 17.4575, -9.2777],
+        [22.3459, -17.2473, -2.0834, 0.9783],
+        [9.9839, -4.9324, 0.0000, 0.0000],
+        [22.3512, -18.5856, 0.0000, 0.0000],
+        [8.9496, -4.4597, 0.0000, 0.0000],
+        [2.1519, 2.3481, 0.0000, 0.0000],
+        [2.1519, 2.3481, 0.0000, 0.0000],
+        [3.9000, 0.0000, 0.0000, 0.0000],
+        [3.2000, 0.0000, 0.0000, 0.0000],
+    ]
+)
 # Turn range of polynomials from 0 - 1 to 0 - r_earth
 _vp_params[:, 1] = _vp_params[:, 1] / _r_earth
 _vp_params[:, 2] = _vp_params[:, 2] / (_r_earth**2)
@@ -62,20 +89,38 @@ _vp_params[:, 3] = _vp_params[:, 3] / (_r_earth**3)
 _vs_params[:, 1] = _vs_params[:, 1] / _r_earth
 _vs_params[:, 2] = _vs_params[:, 2] / (_r_earth**2)
 _vs_params[:, 3] = _vs_params[:, 3] / (_r_earth**3)
-_q_kappa_params = np.array([1327.7, 57823.0, 57823.0, 57823.0, 57823.0,
-                           57823.0, 57823.0, 57823.0, 57823.0, 57823.0,
-                           57823.0, 57823.0])
-_q_mu_params = np.array([84.6, np.inf, 312.0, 312.0, 312.0, 143.0, 143.0,
-                        143.0, 80.0, 600.0, 600.0, 600.0])
+_q_kappa_params = np.array(
+    [
+        1327.7,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+        57823.0,
+    ]
+)
+_q_mu_params = np.array(
+    [84.6, np.inf, 312.0, 312.0, 312.0, 143.0, 143.0, 143.0, 80.0, 600.0, 600.0, 600.0]
+)
 
 
 class Prem(object):
-
-    def __init__(self, breakpoints=_bps, density_params=_density_params,
-                 vp_params=_vp_params, vs_params=_vs_params,
-                 q_mu_params=_q_mu_params, q_kappa_params=_q_kappa_params,
-                 r_earth=_r_earth):
-
+    def __init__(
+        self,
+        breakpoints=_bps,
+        density_params=_density_params,
+        vp_params=_vp_params,
+        vs_params=_vs_params,
+        q_mu_params=_q_mu_params,
+        q_kappa_params=_q_kappa_params,
+        r_earth=_r_earth,
+    ):
         self.r_earth = r_earth
 
         self.density_poly = pp.PeicewisePolynomial(density_params, breakpoints)
@@ -85,8 +130,7 @@ class Prem(object):
         self.qm_poly = pp.PeicewisePolynomial(q_mu_params, breakpoints)
 
         # setup polynomials for mass. This is 4*pi*\int rho(r)*r^2 dr
-        r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]),
-                            (breakpoints.size - 1, 1))
+        r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]), (breakpoints.size - 1, 1))
         self.r2_poly = pp.PeicewisePolynomial(r2_params, breakpoints)
         self.mass_poly = self.density_poly.mult(self.r2_poly)
         self.mass_poly = self.mass_poly.antiderivative()
@@ -94,25 +138,28 @@ class Prem(object):
         self.mass_poly.coeffs = self.mass_poly.coeffs * 4.0 * np.pi
 
         # setup polynomials for MOI. This is 2/3*4*pi*\int rho(r)*r^4 dr
-        r4_params = np.tile(np.array([0.0,  0.0, 0.0, 0.0, 1000.0**5]),
-                            (breakpoints.size - 1, 1))
+        r4_params = np.tile(
+            np.array([0.0, 0.0, 0.0, 0.0, 1000.0**5]), (breakpoints.size - 1, 1)
+        )
         r4_poly = pp.PeicewisePolynomial(r4_params, breakpoints)
         self.moi_poly = self.density_poly.mult(r4_poly)
         self.moi_poly = self.moi_poly.antiderivative()
         #   integrating this gives MOI:
-        self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2/3) * np.pi
+        self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2 / 3) * np.pi
 
         # Setup polynomial for gravity
-        G = 6.6743E-11
+        G = 6.6743e-11
         gravity_poly = self.density_poly.mult(self.r2_poly)
         # evaluate this to get int(rho.r^2 dr)
         gravity_poly = gravity_poly.integrating_poly()
         # constants outside integral
         gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G
         over_r_sq_poly = pp.PeicewisePolynomial(
-            np.zeros((breakpoints.size - 1, 1)), breakpoints,
-            np.zeros((breakpoints.size - 1, 3)))
-        over_r_sq_poly.negative_coeffs[:, 2] = 1.0/1000.0**2
+            np.zeros((breakpoints.size - 1, 1)),
+            breakpoints,
+            np.zeros((breakpoints.size - 1, 3)),
+        )
+        over_r_sq_poly.negative_coeffs[:, 2] = 1.0 / 1000.0**2
         gravity_poly = gravity_poly.mult(over_r_sq_poly)  # Mult by 1/r^2
         self.gravity_poly = gravity_poly  # Evaluate to get gravity at r
 
@@ -121,8 +168,8 @@ class Prem(object):
         self.pressure_poly = self.gravity_poly.mult(self.density_poly)
         self.pressure_poly = self.pressure_poly.antiderivative()
         # Pressure units (/1E9) and density units (*1000.0)
-        self.pressure_poly.coeffs *= 1000.0 / 1.0E9
-        self.pressure_poly.negative_coeffs *= 1000.0 / 1.0E9
+        self.pressure_poly.coeffs *= 1000.0 / 1.0e9
+        self.pressure_poly.negative_coeffs *= 1000.0 / 1.0e9
 
     def density(self, r, break_down=False):
         """
@@ -139,7 +186,7 @@ class Prem(object):
         vs = self.vs_poly(r, break_down=break_down)
         if t != 1:
             qm = self.qm_poly(r, break_down=break_down)
-            vs = vs * (1.0 - ((np.log(t)/np.pi)*np.reciprocal(qm)))
+            vs = vs * (1.0 - ((np.log(t) / np.pi) * np.reciprocal(qm)))
 
         return vs
 
@@ -154,9 +201,14 @@ class Prem(object):
             qm = self.qm_poly(r, break_down=break_down)
             qk = self.qk_poly(r, break_down=break_down)
             vs = self.vs_poly(r, break_down=break_down)
-            e = (4/3)*((vs/vp)**2)
-            vp = vp * (1.0 - ((np.log(t)/np.pi)*(((1.0-e)*np.reciprocal(qk)) -
-                                                 e*np.reciprocal(qm))))
+            e = (4 / 3) * ((vs / vp) ** 2)
+            vp = vp * (
+                1.0
+                - (
+                    (np.log(t) / np.pi)
+                    * (((1.0 - e) * np.reciprocal(qk)) - e * np.reciprocal(qm))
+                )
+            )
         return vp
 
     def qkappa(self, r, break_down=False):
@@ -221,7 +273,7 @@ class Prem(object):
 
         r_in_m = r * 1000
         m = self.mass(r)
-        moif = moi / (m*(r_in_m**2))
+        moif = moi / (m * (r_in_m**2))
         return moi, moif
 
     def gravity(self, r):
@@ -242,17 +294,18 @@ class Prem(object):
         """
         Evaluate the gravitational potential at radius r in J/kg
         """
-        G = 6.6743E-11
+        G = 6.6743e-11
         if np.ndim(r) == 0:
-            phi = -1 * self.mass_poly.integrate(0.0, r)/(r*1000)*G
+            phi = -1 * self.mass_poly.integrate(0.0, r) / (r * 1000) * G
         else:
             phi = np.zeros_like(r)
             for i in range(r.size):
                 if r[i] == 0:
                     phi[i] = 0
                 else:
-                    phi[i] = -1 * self.mass_poly.integrate(0.0, r[i]) / \
-                                                          (r[i]*1000)*G
+                    phi[i] = (
+                        -1 * self.mass_poly.integrate(0.0, r[i]) / (r[i] * 1000) * G
+                    )
         return phi
 
     def pressure(self, r):
@@ -302,8 +355,11 @@ class Prem(object):
         for i in range(nbps):
             j = nbps - i
             k = j - 1
-            rs = np.arange(self.density_poly.breakpoints[j],
-                           self.density_poly.breakpoints[k], -min_step)
+            rs = np.arange(
+                self.density_poly.breakpoints[j],
+                self.density_poly.breakpoints[k],
+                -min_step,
+            )
             ds = self.r_earth - rs
             dens = self.density(rs, break_down=True)  # As we go inwards
             vp = self.vp(rs, break_down=True)  # As we go inwards
@@ -339,9 +395,9 @@ class Prem(object):
                 vss = np.append(vss, vs)
                 qks = np.append(qks, qk)
                 qms = np.append(qms, qm)
-            elif (self.density(self.density_poly.breakpoints[k]) !=
-                  self.density(self.density_poly.breakpoints[k],
-                               break_down=True)):
+            elif self.density(self.density_poly.breakpoints[k]) != self.density(
+                self.density_poly.breakpoints[k], break_down=True
+            ):
                 # Add the value above the inner boundary of this layer
                 rs = self.density_poly.breakpoints[k]
                 ds = self.r_earth - rs
@@ -360,8 +416,8 @@ class Prem(object):
 
         result = np.core.records.fromarrays(
             [depths, radii, densities, vps, vss, qks, qms],
-            names='depth, radius, density, vp, vs, qkappa, qshear'
-            )
+            names="depth, radius, density, vp, vs, qkappa, qshear",
+        )
         return result
 
     def tabulate_model_outwards(self, min_step):
@@ -399,8 +455,11 @@ class Prem(object):
         for i in range(nbps):
             j = i
             k = j + 1
-            rs = np.arange(self.density_poly.breakpoints[j],
-                           self.density_poly.breakpoints[k], min_step)
+            rs = np.arange(
+                self.density_poly.breakpoints[j],
+                self.density_poly.breakpoints[k],
+                min_step,
+            )
             ds = self.r_earth - rs
             dens = self.density(rs)
             vp = self.vp(rs)
@@ -436,9 +495,9 @@ class Prem(object):
                 vss = np.append(vss, vs)
                 qks = np.append(qks, qk)
                 qms = np.append(qms, qm)
-            elif (self.density(self.density_poly.breakpoints[k]) !=
-                  self.density(self.density_poly.breakpoints[k],
-                               break_down=True)):
+            elif self.density(self.density_poly.breakpoints[k]) != self.density(
+                self.density_poly.breakpoints[k], break_down=True
+            ):
                 # Add the value above the inner boundary of this layer
                 rs = self.density_poly.breakpoints[k]
                 ds = self.r_earth - rs
@@ -457,6 +516,6 @@ class Prem(object):
 
         result = np.core.records.fromarrays(
             [depths, radii, densities, vps, vss, qks, qms],
-            names='depth, radius, density, vp, vs, qkappa, qshear'
-            )
+            names="depth, radius, density, vp, vs, qkappa, qshear",
+        )
         return result
