@@ -7,8 +7,9 @@ Support for PREM-like 1D Earth models
 
 import numpy as np
 
-from . import peice_poly as pp
+from .peice_poly import PeicewisePolynomial as PP
 from .const import R_EARTH, G
+
 
 class OneDModel(object):
     def __init__(
@@ -23,52 +24,16 @@ class OneDModel(object):
     ):
         self.r_earth = r_earth
 
-        self.density_poly = pp.PeicewisePolynomial(density_params, breakpoints)
-        self.vp_poly = pp.PeicewisePolynomial(vp_params, breakpoints)
-        self.vs_poly = pp.PeicewisePolynomial(vs_params, breakpoints)
-        self.qk_poly = pp.PeicewisePolynomial(q_kappa_params, breakpoints)
-        self.qm_poly = pp.PeicewisePolynomial(q_mu_params, breakpoints)
+        self.density_poly = PP(density_params, breakpoints)
+        self.vp_poly = PP(vp_params, breakpoints)
+        self.vs_poly = PP(vs_params, breakpoints)
+        self.qk_poly = PP(q_kappa_params, breakpoints)
+        self.qm_poly = PP(q_mu_params, breakpoints)
 
-        # setup polynomials for mass. This is 4*pi*\int rho(r)*r^2 dr
-        r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]), (breakpoints.size - 1, 1))
-        self.r2_poly = pp.PeicewisePolynomial(r2_params, breakpoints)
-        self.mass_poly = self.density_poly.mult(self.r2_poly)
-        self.mass_poly = self.mass_poly.antiderivative()
-        #  integrating this gives mass:
-        self.mass_poly.coeffs = self.mass_poly.coeffs * 4.0 * np.pi
-
-        # setup polynomials for MOI. This is 2/3*4*pi*\int rho(r)*r^4 dr
-        r4_params = np.tile(
-            np.array([0.0, 0.0, 0.0, 0.0, 1000.0**5]), (breakpoints.size - 1, 1)
-        )
-        r4_poly = pp.PeicewisePolynomial(r4_params, breakpoints)
-        self.moi_poly = self.density_poly.mult(r4_poly)
-        self.moi_poly = self.moi_poly.antiderivative()
-        #   integrating this gives MOI:
-        self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2 / 3) * np.pi
-
-        # Setup polynomial for gravity
-        gravity_poly = self.density_poly.mult(self.r2_poly)
-        # evaluate this to get int(rho.r^2 dr)
-        gravity_poly = gravity_poly.integrating_poly()
-        # constants outside integral
-        gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G
-        over_r_sq_poly = pp.PeicewisePolynomial(
-            np.zeros((breakpoints.size - 1, 1)),
-            breakpoints,
-            np.zeros((breakpoints.size - 1, 3)),
-        )
-        over_r_sq_poly.negative_coeffs[:, 2] = 1.0 / 1000.0**2
-        gravity_poly = gravity_poly.mult(over_r_sq_poly)  # Mult by 1/r^2
-        self.gravity_poly = gravity_poly  # Evaluate to get gravity at r
-
-        # Setup polynomial for pressure:
-        # integrate from r to r_earth to get pressure
-        self.pressure_poly = self.gravity_poly.mult(self.density_poly)
-        self.pressure_poly = self.pressure_poly.antiderivative()
-        # Pressure units (/1E9) and density units (*1000.0)
-        self.pressure_poly.coeffs *= 1000.0 / 1.0e9
-        self.pressure_poly.negative_coeffs *= 1000.0 / 1.0e9
+        self.mass_poly = _setup_mass_poly(self.density_poly, breakpoints)
+        self.moi_poly = _setup_moi_poly(self.density_poly, breakpoints)
+        self.gravity_poly = _setup_gravity_poly(self.density_poly, breakpoints)
+        self.pressure_poly = _setup_pressure_poly(self.gravity_poly, self.density_poly)
 
     def density(self, r, break_down=False):
         """
@@ -418,3 +383,58 @@ class OneDModel(object):
             names="depth, radius, density, vp, vs, qkappa, qshear",
         )
         return result
+
+
+def _setup_mass_poly(density_poly: PP, breakpoints: np.ndarray) -> PP:
+    # setup polynomials for mass. This is 4*pi*\int rho(r)*r^2 dr
+    r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]), (breakpoints.size - 1, 1))
+    r2_poly = PP(r2_params, breakpoints)
+    mass_poly = density_poly.mult(r2_poly)
+    mass_poly = mass_poly.antiderivative()
+    #  integrating this gives mass:
+    mass_poly.coeffs = mass_poly.coeffs * 4.0 * np.pi
+    return mass_poly
+
+
+def _setup_moi_poly(density_poly: PP, breakpoints: np.ndarray) -> PP:
+    # setup polynomials for MOI. This is 2/3*4*pi*\int rho(r)*r^4 dr
+    r4_params = np.tile(
+        np.array([0.0, 0.0, 0.0, 0.0, 1000.0**5]), (breakpoints.size - 1, 1)
+    )
+    r4_poly = PP(r4_params, breakpoints)
+    moi_poly = density_poly.mult(r4_poly)
+    moi_poly = moi_poly.antiderivative()
+    #   integrating this gives MOI:
+    moi_poly.coeffs = moi_poly.coeffs * 4.0 * (2 / 3) * np.pi
+    return moi_poly
+
+
+def _setup_gravity_poly(density_poly: PP, breakpoints: np.ndarray) -> PP:
+    r2_params = np.tile(np.array([0.0, 0.0, 1000.0**3]), (breakpoints.size - 1, 1))
+    r2_poly = PP(r2_params, breakpoints)
+    # Setup polynomial for gravity
+    gravity_poly = density_poly.mult(r2_poly)
+    # evaluate this to get int(rho.r^2 dr)
+    gravity_poly = gravity_poly.integrating_poly()
+    # constants outside integral
+    gravity_poly.coeffs = gravity_poly.coeffs * 4.0 * np.pi * G
+    over_r_sq_poly = PP(
+        np.zeros((breakpoints.size - 1, 1)),
+        breakpoints,
+        np.zeros((breakpoints.size - 1, 3)),
+    )
+    over_r_sq_poly.negative_coeffs[:, 2] = 1.0 / 1000.0**2
+    gravity_poly = gravity_poly.mult(over_r_sq_poly)  # Mult by 1/r^2
+    gravity_poly = gravity_poly  # Evaluate to get gravity at r
+    return gravity_poly
+
+
+def _setup_pressure_poly(gravity_poly: PP, density_poly: PP) -> PP:  # breakpoints not needed?
+    # Setup polynomial for pressure:
+    # integrate from r to r_earth to get pressure
+    pressure_poly = gravity_poly.mult(density_poly)
+    pressure_poly = pressure_poly.antiderivative()  # THIS OVERRIDES THE PREVIOUS LINE?
+    # Pressure units (/1E9) and density units (*1000.0)
+    pressure_poly.coeffs *= 1000.0 / 1.0e9
+    pressure_poly.negative_coeffs *= 1000.0 / 1.0e9
+    return pressure_poly
