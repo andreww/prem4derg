@@ -8,118 +8,18 @@ Support for PREM-like 1D Earth models
 import numpy as np
 
 from . import peice_poly as pp
+from .const import R_EARTH, G
 
-
-# Default parameters for isotropic PREM
-_r_earth = 6371.0
-_bps = np.array(
-    [
-        0.0,
-        1221.5,
-        3480.0,
-        3630.0,
-        5600.0,
-        5701.0,
-        5771.0,
-        5971.0,
-        6151.0,
-        6291.0,
-        6346.6,
-        6356.0,
-        6371.0,
-    ]
-)
-_density_params = np.array(
-    [
-        [13.0885, 0.0000, -8.8381, 0.0000],
-        [12.5815, -1.2638, -3.6426, -5.5281],
-        [7.9565, -6.4761, 5.5283, -3.0807],
-        [7.9565, -6.4761, 5.5283, -3.0807],
-        [7.9565, -6.4761, 5.5283, -3.0807],
-        [5.3197, -1.4836, 0.0000, 0.0000],
-        [11.2494, -8.0298, 0.0000, 0.0000],
-        [7.1089, -3.8045, 0.00002, 0.0000],
-        [2.6910, 0.6924, 0.0000, 0.0000],
-        [2.6910, 0.6924, 0.0000, 0.0000],
-        [2.9000, 0.0000, 0.0000, 0.0000],
-        [2.6000, 0.0000, 0.0000, 0.0000],
-    ]
-)
-_density_params[:, 0] = _density_params[:, 0] * 1000.0
-_density_params[:, 1] = (_density_params[:, 1] * 1000.0) / _r_earth
-_density_params[:, 2] = (_density_params[:, 2] * 1000.0) / (_r_earth**2)
-_density_params[:, 3] = (_density_params[:, 3] * 1000.0) / (_r_earth**3)
-_vp_params = np.array(
-    [
-        [11.2622, 0.0000, -6.3640, 0.0000],
-        [11.0487, -4.0362, 4.8023, -13.5732],
-        [15.3891, -5.3181, 5.5242, -2.5514],
-        [24.9520, -40.4673, 51.4832, -26.6419],
-        [29.2766, -23.6027, 5.5242, -2.5514],
-        [19.0957, -9.8672, 0.0000, 0.0000],
-        [39.7027, -32.6166, 0.0000, 0.0000],
-        [20.3926, -12.2569, 0.0000, 0.0000],
-        [4.1875, 3.9382, 0.0000, 0.0000],
-        [4.1875, 3.9382, 0.0000, 0.0000],
-        [6.8000, 0.0000, 0.0000, 0.0000],
-        [5.8000, 0.0000, 0.0000, 0.0000],
-    ]
-)
-_vs_params = np.array(
-    [
-        [3.6678, 0.0000, -4.4475, 0.0000],
-        [0.0000, 0.0000, 0.0000, 0.0000],
-        [6.9254, 1.4672, -2.0834, 0.9783],
-        [11.1671, -13.7818, 17.4575, -9.2777],
-        [22.3459, -17.2473, -2.0834, 0.9783],
-        [9.9839, -4.9324, 0.0000, 0.0000],
-        [22.3512, -18.5856, 0.0000, 0.0000],
-        [8.9496, -4.4597, 0.0000, 0.0000],
-        [2.1519, 2.3481, 0.0000, 0.0000],
-        [2.1519, 2.3481, 0.0000, 0.0000],
-        [3.9000, 0.0000, 0.0000, 0.0000],
-        [3.2000, 0.0000, 0.0000, 0.0000],
-    ]
-)
-# Turn range of polynomials from 0 - 1 to 0 - r_earth
-_vp_params[:, 1] = _vp_params[:, 1] / _r_earth
-_vp_params[:, 2] = _vp_params[:, 2] / (_r_earth**2)
-_vp_params[:, 3] = _vp_params[:, 3] / (_r_earth**3)
-# Turn range of polynomials from 0 - 1 to 0 - r_earth
-_vs_params[:, 1] = _vs_params[:, 1] / _r_earth
-_vs_params[:, 2] = _vs_params[:, 2] / (_r_earth**2)
-_vs_params[:, 3] = _vs_params[:, 3] / (_r_earth**3)
-_q_kappa_params = np.array(
-    [
-        1327.7,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-        57823.0,
-    ]
-)
-_q_mu_params = np.array(
-    [84.6, np.inf, 312.0, 312.0, 312.0, 143.0, 143.0, 143.0, 80.0, 600.0, 600.0, 600.0]
-)
-
-
-class Prem(object):
+class OneDModel(object):
     def __init__(
         self,
-        breakpoints=_bps,
-        density_params=_density_params,
-        vp_params=_vp_params,
-        vs_params=_vs_params,
-        q_mu_params=_q_mu_params,
-        q_kappa_params=_q_kappa_params,
-        r_earth=_r_earth,
+        breakpoints,
+        density_params,
+        vp_params,
+        vs_params,
+        q_mu_params,
+        q_kappa_params,
+        r_earth=R_EARTH,
     ):
         self.r_earth = r_earth
 
@@ -148,7 +48,6 @@ class Prem(object):
         self.moi_poly.coeffs = self.moi_poly.coeffs * 4.0 * (2 / 3) * np.pi
 
         # Setup polynomial for gravity
-        G = 6.6743e-11
         gravity_poly = self.density_poly.mult(self.r2_poly)
         # evaluate this to get int(rho.r^2 dr)
         gravity_poly = gravity_poly.integrating_poly()
@@ -313,11 +212,11 @@ class Prem(object):
         Evaluate pressure (in GPa) at radius r (in km)
         """
         if np.ndim(r) == 0:
-            p = self.pressure_poly.integrate(r, _r_earth)
+            p = self.pressure_poly.integrate(r, R_EARTH)
         else:
             p = np.zeros_like(r)
             for i in range(r.size):
-                p[i] = self.pressure_poly.integrate(r[i], _r_earth)
+                p[i] = self.pressure_poly.integrate(r[i], R_EARTH)
         return p
 
     def tabulate_model_inwards(self, min_step):
