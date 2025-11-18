@@ -11,7 +11,7 @@ from .peice_poly import PeicewisePolynomial as PP
 from .const import R_EARTH, G
 
 
-class OneDModel(object):
+class OneDModel:
     def __init__(
         self,
         breakpoints,
@@ -41,18 +41,15 @@ class OneDModel(object):
         """
         return self.density_poly(r, break_down=break_down)
 
-    def vs(self, r, t=1, break_down=False):
+    def vs(self, r, t=1, break_down=False) -> float | np.ndarray:
         """
         Evaluate s-wave velocity (in km/s) at radius r (in km).
 
         Optionally corrected for period (t), default is 1 s.
         """
-        vs = self.vs_poly(r, break_down=break_down)
-        if t != 1:
-            qm = self.qm_poly(r, break_down=break_down)
-            vs = vs * (1.0 - ((np.log(t) / np.pi) * np.reciprocal(qm)))
-
-        return vs
+        return calculate_vs(
+            self.vs_poly, r, t=t, qm_poly=self.qm_poly, break_down=break_down
+        )
 
     def vp(self, r, t=1, break_down=False):
         """
@@ -60,20 +57,15 @@ class OneDModel(object):
 
         Optionally corrected for period (t), default is 1 s.
         """
-        vp = self.vp_poly(r, break_down=break_down)
-        if t != 1:
-            qm = self.qm_poly(r, break_down=break_down)
-            qk = self.qk_poly(r, break_down=break_down)
-            vs = self.vs_poly(r, break_down=break_down)
-            e = (4 / 3) * ((vs / vp) ** 2)
-            vp = vp * (
-                1.0
-                - (
-                    (np.log(t) / np.pi)
-                    * (((1.0 - e) * np.reciprocal(qk)) - e * np.reciprocal(qm))
-                )
-            )
-        return vp
+        return calculate_vp(
+            self.vp_poly,
+            r,
+            t=t,
+            qk_poly=self.qk_poly,
+            qm_poly=self.qm_poly,
+            vs_poly=self.vs_poly,
+            break_down=break_down,
+        )
 
     def qkappa(self, r, break_down=False):
         qk = self.qk_poly(r, break_down=break_down)
@@ -87,33 +79,19 @@ class OneDModel(object):
         """
         Evaluate bulk modulus (in GPa) at radius r (in km)
         """
-        vp = self.vp_poly(r) * 1000.0  # m/s
-        mu = self.shear_modulus(r)
-        density = self.density_poly(r)
-        return ((vp**2 * density) / 1e9) - mu
+        return calculate_bulk_modulus(self.vp_poly, self.vs_poly, self.density_poly, r)
 
     def shear_modulus(self, r):
         """
         Evaluate shear modulus (in GPa) at radius r (in km)
         """
-        vs = self.vs_poly(r) * 1000.0  # m/s
-        density = self.density_poly(r)
-        return (vs**2 * density) / 1.0e9
+        return calculate_shear_modulus(self.vs_poly, self.density_poly, r)
 
     def mass(self, r, r_inner=0.0):
         """
         Evaluate mass inside radius r (in km)
         """
-        if np.ndim(r) == 0:
-            m = self.mass_poly.integrate(r_inner, r)
-        else:
-            m = np.zeros_like(r)
-            for i in range(r.size):
-                if r[i] == 0:
-                    m[i] = 0
-                else:
-                    m[i] = self.mass_poly.integrate(r_inner, r[i])
-        return m
+        return calculate_mass(self.mass_poly, r, r_inner=r_inner)
 
     def moment_of_inertia(self, r, r_inner=0.0):
         """
@@ -125,64 +103,22 @@ class OneDModel(object):
         as the core becomes more dense than the crust/mantle.
 
         """
-        if np.ndim(r) == 0:
-            moi = self.moi_poly.integrate(r_inner, r)
-        else:
-            moi = np.zeros_like(r)
-            for i in range(r.size):
-                if r[i] == 0:
-                    moi[i] = 0
-                else:
-                    moi[i] = self.moi_poly.integrate(r_inner, r[i])
-
-        r_in_m = r * 1000
-        m = self.mass(r)
-        moif = moi / (m * (r_in_m**2))
-        return moi, moif
+        return calculate_moi(self.moi_poly, self.mass_poly, r, r_inner=r_inner)
 
     def gravity(self, r):
-        if np.ndim(r) == 0:
-            if r == 0.0:
-                return 0.0
-            g = self.gravity_poly(r)
-        else:
-            g = np.zeros_like(r)
-            for i in range(r.size):
-                if r[i] == 0:
-                    g[i] = 0
-                else:
-                    g[i] = self.gravity_poly(r[i])
-        return g
+        return calculate_gravity(self.gravity_poly, r)
 
     def grav_potential(self, r):
         """
         Evaluate the gravitational potential at radius r in J/kg
         """
-        G = 6.6743e-11
-        if np.ndim(r) == 0:
-            phi = -1 * self.mass_poly.integrate(0.0, r) / (r * 1000) * G
-        else:
-            phi = np.zeros_like(r)
-            for i in range(r.size):
-                if r[i] == 0:
-                    phi[i] = 0
-                else:
-                    phi[i] = (
-                        -1 * self.mass_poly.integrate(0.0, r[i]) / (r[i] * 1000) * G
-                    )
-        return phi
+        return calculate_grav_potential(self.mass_poly, r)
 
     def pressure(self, r):
         """
         Evaluate pressure (in GPa) at radius r (in km)
         """
-        if np.ndim(r) == 0:
-            p = self.pressure_poly.integrate(r, R_EARTH)
-        else:
-            p = np.zeros_like(r)
-            for i in range(r.size):
-                p[i] = self.pressure_poly.integrate(r[i], R_EARTH)
-        return p
+        return calculate_pressure(self.pressure_poly, r)
 
     def tabulate_model_inwards(self, min_step):
         """
@@ -429,7 +365,9 @@ def _setup_gravity_poly(density_poly: PP, breakpoints: np.ndarray) -> PP:
     return gravity_poly
 
 
-def _setup_pressure_poly(gravity_poly: PP, density_poly: PP) -> PP:  # breakpoints not needed?
+def _setup_pressure_poly(
+    gravity_poly: PP, density_poly: PP
+) -> PP:  # breakpoints not needed?
     # Setup polynomial for pressure:
     # integrate from r to r_earth to get pressure
     pressure_poly = gravity_poly.mult(density_poly)
@@ -438,3 +376,166 @@ def _setup_pressure_poly(gravity_poly: PP, density_poly: PP) -> PP:  # breakpoin
     pressure_poly.coeffs *= 1000.0 / 1.0e9
     pressure_poly.negative_coeffs *= 1000.0 / 1.0e9
     return pressure_poly
+
+
+def calculate_vs(
+    vs_poly: PP,
+    r: float,
+    t: float = 1,
+    qm_poly: PP | None = None,
+    break_down: bool = False,
+) -> float | np.ndarray:
+    """
+    Evaluate s-wave velocity (in km/s) at radius r (in km).
+
+    Optionally corrected for period (t), default is 1 s.
+    """
+    vs = vs_poly(r, break_down=break_down)
+    if t != 1:
+        if qm_poly is None:
+            raise ValueError("qm_poly must be provided for attenuation correction")
+        qm = qm_poly(r, break_down=break_down)
+        vs = vs * (1.0 - ((np.log(t) / np.pi) * np.reciprocal(qm)))
+
+    return vs
+
+
+def calculate_vp(
+    vp_poly: PP,
+    r: float,
+    t: float = 1,
+    qk_poly: PP | None = None,
+    qm_poly: PP | None = None,
+    vs_poly: PP | None = None,
+    break_down: bool = False,
+) -> float | np.ndarray:
+    """
+    Evaluate p-wave velocity (in km/s) at radius r (in km).
+
+    Optionally corrected for period (t), default is 1 s.
+    """
+    vp = vp_poly(r, break_down=break_down)
+    if t != 1:
+        if qk_poly is None or qm_poly is None or vs_poly is None:
+            raise ValueError(
+                "qk_poly, qm_poly and vs_poly must be provided for attenuation correction"
+            )
+        qm = qm_poly(r, break_down=break_down)
+        qk = qk_poly(r, break_down=break_down)
+        vs = vs_poly(r, break_down=break_down)
+        e = (4 / 3) * ((vs / vp) ** 2)
+        vp = vp * (
+            1.0
+            - (
+                (np.log(t) / np.pi)
+                * (((1.0 - e) * np.reciprocal(qk)) - e * np.reciprocal(qm))
+            )
+        )
+    return vp
+
+
+def calculate_bulk_modulus(
+    vp_poly: PP, vs_poly: PP, density_poly: PP, r: float
+) -> float:
+    """
+    Evaluate bulk modulus (in GPa) at radius r (in km)
+    """
+    vp = vp_poly(r) * 1000.0  # m/s
+    mu = calculate_shear_modulus(vs_poly, density_poly, r)
+    density = density_poly(r)
+    return ((vp**2 * density) / 1e9) - mu
+
+
+def calculate_shear_modulus(vs_poly: PP, density_poly: PP, r: float) -> float:
+    """
+    Evaluate shear modulus (in GPa) at radius r (in km)
+    """
+    vs = vs_poly(r) * 1000.0  # m/s
+    density = density_poly(r)
+    return (vs**2 * density) / 1.0e9
+
+
+def calculate_mass(mass_poly: PP, r: np.ndarray, r_inner=0.0):
+    """
+    Evaluate mass inside radius r (in km)
+    """
+    if np.ndim(r) == 0:
+        m = mass_poly.integrate(r_inner, r)
+    else:
+        m = np.zeros_like(r)
+        for i in range(r.size):
+            if r[i] == 0:
+                m[i] = 0
+            else:
+                m[i] = mass_poly.integrate(r_inner, r[i])
+    return m
+
+
+def calculate_moi(moi_poly: PP, mass_poly: PP, r: np.ndarray, r_inner=0.0):
+    """
+    Evaluate moment of inertia inside radius r (in km)
+
+    Return a tuple of moment of inertia (in kg m^2) and
+    the moment of inertia factor (I/MR**2, dimensionless)
+    which is 0.4 for a uniform density body, and decreases
+    as the core becomes more dense than the crust/mantle.
+
+    """
+    if np.ndim(r) == 0:
+        moi = moi_poly.integrate(r_inner, r)
+    else:
+        moi = np.zeros_like(r)
+        for i in range(r.size):
+            if r[i] == 0:
+                moi[i] = 0
+            else:
+                moi[i] = moi_poly.integrate(r_inner, r[i])
+
+    r_in_m = r * 1000
+    m = calculate_mass(mass_poly, r, r_inner=r_inner)
+    moif = moi / (m * (r_in_m**2))
+    return moi, moif
+
+
+def calculate_gravity(gravity_poly: PP, r: np.ndarray):
+    if np.ndim(r) == 0:
+        if r == 0.0:
+            return 0.0
+        g = gravity_poly(r)
+    else:
+        g = np.zeros_like(r)
+        for i in range(r.size):
+            if r[i] == 0:
+                g[i] = 0
+            else:
+                g[i] = gravity_poly(r[i])
+    return g
+
+
+def calculate_grav_potential(mass_poly: PP, r: np.ndarray):
+    """
+    Evaluate the gravitational potential at radius r in J/kg
+    """
+    if np.ndim(r) == 0:
+        phi = -1 * mass_poly.integrate(0.0, r) / (r * 1000) * G
+    else:
+        phi = np.zeros_like(r)
+        for i in range(r.size):
+            if r[i] == 0:
+                phi[i] = 0
+            else:
+                phi[i] = -1 * mass_poly.integrate(0.0, r[i]) / (r[i] * 1000) * G
+    return phi
+
+
+def calculate_pressure(pressure_poly: PP, r):
+    """
+    Evaluate pressure (in GPa) at radius r (in km)
+    """
+    if np.ndim(r) == 0:
+        p = pressure_poly.integrate(r, R_EARTH)
+    else:
+        p = np.zeros_like(r)
+        for i in range(r.size):
+            p[i] = pressure_poly.integrate(r[i], R_EARTH)
+    return p
