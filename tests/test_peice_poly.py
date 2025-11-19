@@ -5,7 +5,7 @@ Test cases for PeicewisePolynomial class
 import numpy as np
 import numpy.testing as npt
 
-import earth_model.peice_poly as pp
+import prem4derg.peice_poly as pp
 
 
 def test_constant():
@@ -62,7 +62,7 @@ def test_one_over_x():
     """
     poly = pp.PeicewisePolynomial(np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 0.0]]),
                                   np.array([0.0, 0.5, 1.0]),
-                                  c_neg=np.array([[0.0, 0.0], [0.0, 1.0]]))
+                                  neg_coeffs=np.array([[0.0, 0.0], [0.0, 1.0]]))
     assert poly(0.0) == 0.0
     assert poly(0.25) == 0.25**2
     assert poly(0.5) == 1.0/0.5
@@ -150,7 +150,7 @@ def test_recip_deriv():
     poly = pp.PeicewisePolynomial(np.array([[3.0, 4.0],
                                             [30.0, 40.0]]),
                                   np.array([0.0, 2.0, 4.0]),
-                                  c_neg=np.array([[0.0, 2.0, 3.0],
+                                  neg_coeffs=np.array([[0.0, 2.0, 3.0],
                                                   [0.0, 20.0, 30.0]]))
     expected_deriv_coefs = np.array([[4.0], [40.0]])
     expected_neg_deriv_coeffs = np.array([[0.0, 0.0, -2.0, -6.0],
@@ -194,7 +194,7 @@ def test_recip_antideriv():
     poly = pp.PeicewisePolynomial(np.array([[4.0],
                                             [40.0]]),
                                   np.array([0.0, 2.0, 4.0]),
-                                  c_neg=np.array([[0.0, 0.0, -2.0, -6.0],
+                                  neg_coeffs=np.array([[0.0, 0.0, -2.0, -6.0],
                                                   [0.0, 0.0, -20.0, -60.0]]))
     expected_int_coefs = np.array([[0.0, 4.0], [0.0, 40.0]])
     expected_neg_int_coeffs = np.array([[0.0, 2.0, 3.0],
@@ -219,7 +219,7 @@ def test_log_deriv_int():
     poly = pp.PeicewisePolynomial(np.array([[3.0, 4.0],
                                             [30.0, 40.0]]),
                                   np.array([0.0, 2.0, 4.0]),
-                                  c_neg=np.array([[5.0, 2.0, 3.0],
+                                  neg_coeffs=np.array([[5.0, 2.0, 3.0],
                                                   [50.0, 20.0, 30.0]]))
     expected_deriv_coefs = np.array([[4.0], [40.0]])
     expected_neg_deriv_coeffs = np.array([[0.0, 5.0, -2.0, -6.0],

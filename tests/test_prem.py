@@ -9,7 +9,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from earth_model.earth_model import Prem
+from prem4derg import PREM
 
 # PREM data (from Table A.1. in intro to 
 # physics of Earth's interior)
@@ -37,8 +37,7 @@ def test_earth_mass():
     Check the mass of the Earth matches that
     given in the PREM paper
     """
-    prem = Prem()
-    calculated_mass = prem.mass(prem.r_earth)
+    calculated_mass = PREM.mass(PREM.r_earth)
     expected_mass = 5.972e+24
     npt.assert_allclose(calculated_mass, expected_mass, atol=1.0E22)
 
@@ -49,8 +48,7 @@ def test_prem_gravity(radius, expected_gravity):
     A selection of cases from Table A.1 in Poirier's book
     'introduction to the physics of Earth's interior'
     """
-    prem = Prem()
-    g_calc = prem.gravity(radius)
+    g_calc = PREM.gravity(radius)
     npt.assert_allclose(g_calc, expected_gravity, atol=0.05)
 
 
@@ -60,8 +58,7 @@ def test_prem_pressure(radius, expected_pressure):
     A selection of cases from Table A.1 in Poirier's book
     'introduction to the physics of Earth's interior'
     """
-    prem = Prem()
-    p_calc = prem.pressure(radius)
+    p_calc = PREM.pressure(radius)
     # For the numerical integration we need a step size of ~1 km to get
     # reasonable performance, which leads to errors of ~1 GPa...
     npt.assert_allclose(p_calc, expected_pressure, atol=0.4)
