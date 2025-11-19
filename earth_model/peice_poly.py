@@ -8,9 +8,9 @@ Peicewise polynomials like PREM
 import numpy as np
 
 
-class PeicewisePolynomial(object):
+class PeicewisePolynomial:
     """
-    Peicewise Polynomials a different way
+    Piecewise Polynomials a different way
 
     The SciPy PPoly class defines a function from
     polynomials with coefficents c and breakpoints x
@@ -30,89 +30,115 @@ class PeicewisePolynomial(object):
     integrals.
     """
 
-    def __init__(self, c, x, c_neg=None):
-        assert len(x.shape) == 1, "breakpoints must be 1D"
-        self.breakpoints = x
-        if len(c.shape) == 1:
-            c = np.expand_dims(c, axis=1)
-            c = np.append(c, np.zeros_like(c), axis=1)
-        assert len(c.shape) == 2, "Positive coefficients must be 2D"
-        self.coeffs = c
-        if c_neg is not None:
-            if len(c_neg.shape) == 1:
-                c_neg = np.expand_dims(c_neg, axis=1)
-                c_neg = np.append(c_neg, np.zeros_like(c), axis=1)
-            assert len(c_neg.shape) == 2, "Negative coefficients must be 2D"
-            self.negative_coeffs = c_neg
+    def __init__(self, coeffs: np.ndarray, breakpoints: np.ndarray, neg_coeffs: np.ndarray | None = None) -> None:
+        if breakpoints.ndim != 1:
+            raise ValueError("Breakpoints must be 1D")
+        self.breakpoints = breakpoints
+
+        self.coeffs = _standardize_coeffs_shapes(coeffs)
+        
+        if neg_coeffs is not None:
+            self.negative_coeffs = _standardize_coeffs_shapes(neg_coeffs)
         else:
             self.negative_coeffs = None
 
-    def __call__(self, xp, break_down=False):
-        if np.ndim(xp) == 0:
-            value = self._evaluate_at_point(xp, break_down)
-        else:
-            value = np.zeros_like(xp)
-            for i in range(xp.size):
-                value[i] = self._evaluate_at_point(xp[i], break_down)
-        return value
+    def __call__(self, xp: float | np.ndarray, break_down: bool = False) -> float | np.ndarray:
+        """
+        Vectorised evaluation.
 
-    def _evaluate_at_point(self, x, break_down=False):
+        break_down=False: intervals [b_i, b_{i+1})
+        break_down=True:  intervals (b_i, b_{i+1}]
+        Special case: x == last breakpoint -> last segment.
         """
-        Evaluate piecewise polynomial at point x
-        """
-        coef, neg_coef = self._get_coefs(x, break_down)
-        value = 0
-        for i, c in enumerate(coef):
-            value = value + c * x**i
-        if neg_coef is not None:
-            for i, c in enumerate(neg_coef):
-                if i == 0 and c != 0.0:  # Hum - avoid these...
-                    if x == 0.0:
-                        raise ValueError  # Cannot do ln(0)
-                    else:
-                        value = value + c * np.log(np.abs(x))
-                elif x == 0.0 and c != 0.0:
-                    raise ZeroDivisionError
-                elif c != 0.0:
-                    value = value + (c / x**i)
-                # The c == 0.0 case can be ignored - adding 0.0
-        return value
+        xarr = np.asarray(xp)
+        scalar_input = xarr.ndim == 0
+        xflat = xarr.ravel()
 
-    def _get_coefs(self, x, break_down=False):
-        """
-        Return coefs at x
+        # Segment indices (-1 means out of domain)
+        seg_idx = self._segment_indices(xflat, break_down)
 
-        If x falls on a breakpoint, we take the coefficients from
-        'above' the breakpoint. Unless break_down is True, in which
-        case we take the coefficients from 'below'
+        if np.any(seg_idx < 0):
+            raise ValueError("Some evaluation points lie outside breakpoint domain")
+
+        # Prepare output
+        out = np.zeros_like(xflat, dtype=float)
+
+        n_segments = self.breakpoints.size - 1
+        pos_degree = self.coeffs.shape[1]
+        powers = np.arange(pos_degree)
+
+        for seg in range(n_segments):
+            mask = seg_idx == seg
+            if not np.any(mask):
+                continue
+            xs = xflat[mask]
+            # Positive-power part
+            pos_coef = self.coeffs[seg]  # shape (pos_degree,)
+            # xs[:, None] ** powers -> shape (n_pts_seg, pos_degree)
+            out[mask] += (pos_coef * (xs[:, None] ** powers)).sum(axis=1)
+
+            # Negative / ln terms
+            if self.negative_coeffs is not None:
+                neg_coef = self.negative_coeffs[seg]
+                if np.any(neg_coef != 0.0):
+                    # ln term (index 0)
+                    if neg_coef[0] != 0.0:
+                        if np.any(xs == 0.0):
+                            raise ValueError("ln(|x|) undefined at x = 0")
+                        out[mask] += neg_coef[0] * np.log(np.abs(xs))
+                    # reciprocal terms (indices >=1)
+                    if neg_coef.size > 1:
+                        rec_indices = np.arange(1, neg_coef.size)
+                        nz = neg_coef[1:] != 0.0
+                        if np.any(nz):
+                            if np.any((xs == 0.0)):
+                                # Division by zero for any non-zero reciprocal coefficient
+                                if np.any(neg_coef[1:] != 0.0):
+                                    raise ZeroDivisionError("Division by zero in 1/x^i term")
+                            # Compute only for non-zero coefficients
+                            active_i = rec_indices[nz]
+                            active_c = neg_coef[1:][nz]
+                            # Sum_{i} c_i / x^i
+                            # xs[:, None] ** (-active_i) -> shape (n_pts, n_active_powers)
+                            # active_c -> shape (n_active_powers,)
+                            out[mask] += (active_c * (xs[:, None] ** (-active_i))).sum(axis=1)
+
+        if scalar_input:
+            return float(out[0])
+        return out.reshape(xarr.shape)
+
+    def _segment_indices(self, x: np.ndarray, break_down: bool) -> np.ndarray:
         """
-        if x == self.breakpoints[-1]:
-            # We use the last coefficients for the outside point
-            pos_coef = self.coeffs[-1, :]
-            if self.negative_coeffs is None:
-                neg_coef = None
-            else:
-                neg_coef = self.negative_coeffs[-1, :]
-            return pos_coef, neg_coef
+        Return segment indices for each x.
+        -1 indicates out-of-domain.
+        """
+        b = self.breakpoints
+        n_segments = b.size - 1
+        seg_idx = np.empty_like(x, dtype=int)
+
         if break_down:
-            for i in range(self.breakpoints.size):
-                if (x > self.breakpoints[i]) and (x <= self.breakpoints[i + 1]):
-                    pos_coef = self.coeffs[i, :]
-                    if self.negative_coeffs is None:
-                        neg_coef = None
-                    else:
-                        neg_coef = self.negative_coeffs[i, :]
-                    return pos_coef, neg_coef
+            # (b_i, b_{i+1}] -> use left-open search
+            idx = np.searchsorted(b, x, side="left") - 1
         else:
-            for i in range(self.breakpoints.size):
-                if (x >= self.breakpoints[i]) and (x < self.breakpoints[i + 1]):
-                    pos_coef = self.coeffs[i, :]
-                    if self.negative_coeffs is None:
-                        neg_coef = None
-                    else:
-                        neg_coef = self.negative_coeffs[i, :]
-                    return pos_coef, neg_coef
-        return None, None
+            # [b_i, b_{i+1}) -> use right-side search
+            idx = np.searchsorted(b, x, side="right") - 1
+
+        # Special case: x == last breakpoint -> last segment
+        last_bp = b[-1]
+        at_last = x == last_bp
+        if np.any(at_last):
+            idx[at_last] = n_segments - 1  # last segment
+
+        # Out of domain: x < b[0] or x > b[-1] always invalid
+        invalid = (x < b[0]) | (x > b[-1])
+        # For break_down True also exclude x == b[0]
+        if break_down:
+            invalid |= (x == b[0])
+
+        # Clamp valid indices; mark invalid as -1
+        seg_idx[:] = idx
+        seg_idx[invalid] = -1
+        return seg_idx
 
     def derivative(self):
         deriv_breakpoints = self.breakpoints
@@ -215,7 +241,7 @@ class PeicewisePolynomial(object):
                 ip_coeffs[bpi, 0] = ip_coeffs[bpi, 0] + antiderivative.integrate(0, bp)
         return PeicewisePolynomial(ip_coeffs, antiderivative.breakpoints)
 
-    def mult(self, other):
+    def mult(self, other: "PeicewisePolynomial") -> "PeicewisePolynomial":
         # FIXME - for this approach brakepoints need to be same place too
         assert self.coeffs.shape[0] == other.coeffs.shape[0], (
             "different number of breakpoints"
@@ -305,3 +331,14 @@ class PeicewisePolynomial(object):
             mult_coefs, mult_breakpoints, mult_negative_coefs
         )
         return mult_poly
+
+
+def _standardize_coeffs_shapes(coeffs: np.ndarray) -> np.ndarray:
+    if coeffs.ndim == 1:
+        coeffs = np.expand_dims(coeffs, axis=1)
+        coeffs = np.append(coeffs, np.zeros_like(coeffs), axis=1)
+    elif coeffs.ndim == 2:
+        pass
+    else:
+        raise ValueError("Coefficients must be 1D or 2D")
+    return coeffs
