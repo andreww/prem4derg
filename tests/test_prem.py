@@ -9,7 +9,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from earth_model.PREM import PREM
+from prem4derg import PREM
 
 # PREM data (from Table A.1. in intro to 
 # physics of Earth's interior)
