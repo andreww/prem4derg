@@ -50,7 +50,7 @@ class PeicewisePolynomial:
         break_down=True:  intervals (b_i, b_{i+1}]
         Special case: x == last breakpoint -> last segment.
         """
-        xarr = np.asarray(xp)
+        xarr = np.asarray(xp, dtype=float)
         scalar_input = xarr.ndim == 0
         xflat = xarr.ravel()
 
