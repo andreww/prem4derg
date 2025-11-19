@@ -1,6 +1,0 @@
-numpy
-pylint
-pytest
-pytest-cov
-mypy
-scipy
