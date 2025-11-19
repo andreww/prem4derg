@@ -5,6 +5,7 @@ Support for PREM-like 1D Earth models
 
 """
 
+from dataclasses import dataclass, field
 import numpy as np
 
 from .const import R_EARTH
@@ -25,30 +26,43 @@ from .physics import (
 )
 
 
+@dataclass
 class OneDModel:
-    def __init__(
-        self,
-        breakpoints,
-        density_params,
-        vp_params,
-        vs_params,
-        q_mu_params,
-        q_kappa_params,
-        r_earth=R_EARTH,
-    ):
-        self.r_earth = r_earth
+    breakpoints: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+    density_params: np.ndarray = field(
+        default_factory=lambda: np.zeros((), dtype=float)
+    )
+    vp_params: np.ndarray = field(default_factory=lambda: np.zeros((), dtype=float))
+    vs_params: np.ndarray = field(default_factory=lambda: np.zeros((), dtype=float))
+    q_mu_params: np.ndarray = field(default_factory=lambda: np.zeros((), dtype=float))
+    q_kappa_params: np.ndarray = field(
+        default_factory=lambda: np.zeros((), dtype=float)
+    )
+    r_earth: float = R_EARTH
 
-        self.density_poly = PP(density_params, breakpoints)
-        self.vp_poly = PP(vp_params, breakpoints)
-        self.vs_poly = PP(vs_params, breakpoints)
-        self.qk_poly = PP(q_kappa_params, breakpoints)
-        self.qm_poly = PP(q_mu_params, breakpoints)
+    def __post_init__(self):
+        """Initialise piecewise polynomials when params are not 0D."""
+
+        def has_coeffs(arr: np.ndarray) -> bool:
+            return arr.ndim != 0
+
+        if has_coeffs(self.density_params):
+            self.density_poly = PP(self.density_params, self.breakpoints)
+        if has_coeffs(self.vp_params):
+            self.vp_poly = PP(self.vp_params, self.breakpoints)
+        if has_coeffs(self.vs_params):
+            self.vs_poly = PP(self.vs_params, self.breakpoints)
+        if has_coeffs(self.q_kappa_params):
+            self.qk_poly = PP(self.q_kappa_params, self.breakpoints)
+        if has_coeffs(self.q_mu_params):
+            self.qm_poly = PP(self.q_mu_params, self.breakpoints)
 
     def density(self, r, break_down=False):
         """
         Evaluate density in kg/m**3 at radii r (in km)
         """
-        return calculate_density(self.density_poly, r, break_down=break_down)
+        dp = self._require_polynomial("density_poly")
+        return calculate_density(dp, r, break_down=break_down)
 
     def vs(self, r, t=1, break_down=False) -> float | np.ndarray:
         """
@@ -56,9 +70,9 @@ class OneDModel:
 
         Optionally corrected for period (t), default is 1 s.
         """
-        return calculate_vs(
-            self.vs_poly, r, t=t, qm_poly=self.qm_poly, break_down=break_down
-        )
+        vsp = self._require_polynomial("vs_poly")
+        qmp = self._require_polynomial("qm_poly")
+        return calculate_vs(vsp, r, t=t, qm_poly=qmp, break_down=break_down)
 
     def vp(self, r, t=1, break_down=False):
         """
@@ -66,39 +80,51 @@ class OneDModel:
 
         Optionally corrected for period (t), default is 1 s.
         """
+        vp_poly = self._require_polynomial("vp_poly")
+        qk_poly = self._require_polynomial("qk_poly")
+        qm_poly = self._require_polynomial("qm_poly")
+        vs_poly = self._require_polynomial("vs_poly")
         return calculate_vp(
-            self.vp_poly,
+            vp_poly,
             r,
             t=t,
-            qk_poly=self.qk_poly,
-            qm_poly=self.qm_poly,
-            vs_poly=self.vs_poly,
+            qk_poly=qk_poly,
+            qm_poly=qm_poly,
+            vs_poly=vs_poly,
             break_down=break_down,
         )
 
     def qkappa(self, r, break_down=False):
-        return calculate_qkappa(self.qk_poly, r, break_down=break_down)
+        qk_poly = self._require_polynomial("qk_poly")
+        return calculate_qkappa(qk_poly, r, break_down=break_down)
 
     def qshear(self, r, break_down=False):
-        return calculate_qshear(self.qm_poly, r, break_down=break_down)
+        qm_poly = self._require_polynomial("qm_poly")
+        return calculate_qshear(qm_poly, r, break_down=break_down)
 
     def bulk_modulus(self, r):
         """
         Evaluate bulk modulus (in GPa) at radius r (in km)
         """
-        return calculate_bulk_modulus(self.vp_poly, self.vs_poly, self.density_poly, r)
+        vp_poly = self._require_polynomial("vp_poly")
+        vs_poly = self._require_polynomial("vs_poly")
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_bulk_modulus(vp_poly, vs_poly, density_poly, r)
 
     def shear_modulus(self, r):
         """
         Evaluate shear modulus (in GPa) at radius r (in km)
         """
-        return calculate_shear_modulus(self.vs_poly, self.density_poly, r)
+        vs_poly = self._require_polynomial("vs_poly")
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_shear_modulus(vs_poly, density_poly, r)
 
     def mass(self, r, r_inner=0.0):
         """
         Evaluate mass inside radius r (in km)
         """
-        return calculate_mass(self.density_poly, r, r_inner=r_inner)
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_mass(density_poly, r, r_inner=r_inner)
 
     def moment_of_inertia(self, r, r_inner=0.0):
         """
@@ -110,22 +136,32 @@ class OneDModel:
         as the core becomes more dense than the crust/mantle.
 
         """
-        return calculate_moi(self.density_poly, r, r_inner=r_inner)
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_moi(density_poly, r, r_inner=r_inner)
 
     def gravity(self, r):
-        return calculate_gravity(self.density_poly, r)
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_gravity(density_poly, r)
 
     def grav_potential(self, r):
         """
         Evaluate the gravitational potential at radius r in J/kg
         """
-        return calculate_grav_potential(self.density_poly, r)
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_grav_potential(density_poly, r)
 
     def pressure(self, r):
         """
         Evaluate pressure (in GPa) at radius r (in km)
         """
-        return calculate_pressure(self.density_poly, r)
+        density_poly = self._require_polynomial("density_poly")
+        return calculate_pressure(density_poly, r)
+
+    def _require_polynomial(self, attr: str) -> PP:
+        poly = getattr(self, attr)
+        if poly is None:
+            raise ValueError(f"{attr} polynomial is not defined.")
+        return poly
 
 
 def tabulate_model(
